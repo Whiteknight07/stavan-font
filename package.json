@@ -1,0 +1,24 @@
+{
+  "name": "stavan-font",
+  "version": "1.0.0",
+  "description": "A handwriting font made from 675 pages of real Apple Pencil notes, plus a tiny library that replays the pen strokes as animated SVG.",
+  "type": "module",
+  "license": "OFL-1.1 AND MIT",
+  "author": "Stavan",
+  "homepage": "https://whiteknight07.github.io/stavan-font/",
+  "repository": { "type": "git", "url": "git+https://github.com/Whiteknight07/stavan-font.git" },
+  "bugs": "https://github.com/Whiteknight07/stavan-font/issues",
+  "keywords": ["font", "handwriting", "handwriting-font", "webfont", "woff2", "svg", "animation", "goodnotes", "apple-pencil"],
+  "main": "site/stavan.js",
+  "exports": {
+    ".": "./site/stavan.js",
+    "./css": "./dist/stavan.css",
+    "./dist/*": "./dist/*",
+    "./data/*": "./site/data/*"
+  },
+  "bin": { "stavan-write": "site/write.mjs" },
+  "files": ["dist/*.ttf", "dist/*.woff", "dist/*.woff2", "dist/stavan.css", "site/stavan.js", "site/write.mjs", "site/data/stavan-*.json", "site/data/strokes.json", "OFL.txt", "LICENSE"],
+  "scripts": {
+    "test": "node test/layout.test.mjs"
+  }
+}

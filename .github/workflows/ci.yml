@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  layout:
+    name: Site layout matches the font
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node test/layout.test.mjs
+
+  build:
+    name: Rebuild the font from design/
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: sudo apt-get update && sudo apt-get install -y potrace
+      - run: pip install -r requirements.txt
+      - name: Build fonts and web data
+        run: cd hand && python build_font.py > /dev/null
+      - name: Check the fresh build against HarfBuzz
+        run: python hand/golden.py && node test/layout.test.mjs
+      - name: Check the font files
+        run: |
+          python - <<'PY'
+          from fontTools.ttLib import TTFont
+          for w in ("Regular", "Bold"):
+              f = TTFont(f"dist/Stavan-{w}.ttf")
+              cmap = f.getBestCmap()
+              missing = [chr(c) for c in range(0x20, 0x7F) if c not in cmap]
+              assert not missing, f"{w} is missing {missing}"
+              assert "calt" in [r.FeatureTag for r in f["GSUB"].table.FeatureList.FeatureRecord]
+              print(w, len(f.getGlyphOrder()), "glyphs, all printable ASCII present")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stavan-fonts
+          path: |
+            dist/*.ttf
+            dist/*.woff2

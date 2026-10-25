@@ -1,0 +1,8 @@
+numpy
+opencv-python-headless
+scikit-image
+Pillow
+PyMuPDF
+fonttools[woff]
+uharfbuzz
+freetype-py

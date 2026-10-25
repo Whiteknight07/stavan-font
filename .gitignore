@@ -1,0 +1,13 @@
+# private: original notes and everything derived from them
+/data/
+/work/
+/out/
+/tools/
+/upstream/
+/.venv/
+__pycache__/
+.DS_Store
+node_modules/
+# local dev: symlink to ../dist so the site works with a static server
+/site/dist
+/_site/

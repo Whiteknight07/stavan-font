@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stavan, a handwriting font</title>
+<meta name="description" content="A free font made from 675 pages of real Apple Pencil notes. Type in it, watch it write itself, and download it.">
+<meta property="og:title" content="Stavan, a handwriting font">
+<meta property="og:description" content="A free font made from 675 pages of real Apple Pencil notes. Type in it, watch it write itself, and download it.">
+<meta property="og:image" content="https://whiteknight07.github.io/stavan-font/social.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#e9ecf1">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="dist/Stavan-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="dist/stavan.css">
+<link rel="stylesheet" href="style.css">
+<script type="module" src="app.js"></script>
+</head>
+<body data-paper="ruled">
+
+<header class="toolbar" aria-label="Pen and page settings">
+  <div class="tool-group" role="radiogroup" aria-label="Ink">
+    <span class="tool-label">Ink</span>
+    <!-- the six ink colours that appear in the notes, most used first -->
+    <button class="swatch" role="radio" data-ink="#000000" style="--c:#000000" aria-label="Black, used for 159,098 strokes in the notes"></button>
+    <button class="swatch" role="radio" data-ink="#d10000" style="--c:#d10000" aria-label="Red, used for 8,778 strokes in the notes"></button>
+    <button class="swatch" role="radio" data-ink="#007aff" style="--c:#007aff" aria-label="Blue, used for 7,628 strokes in the notes"></button>
+    <button class="swatch" role="radio" data-ink="#f49923" style="--c:#f49923" aria-label="Orange, used for 1,002 strokes in the notes"></button>
+    <button class="swatch" role="radio" data-ink="#636363" style="--c:#636363" aria-label="Grey, used for 908 strokes in the notes"></button>
+    <button class="swatch" role="radio" data-ink="#82218c" style="--c:#82218c" aria-label="Purple, used for 208 strokes in the notes"></button>
+  </div>
+  <div class="tool-group">
+    <label class="tool-label" for="size">Size</label>
+    <input id="size" type="range" min="20" max="72" step="1" value="36">
+  </div>
+  <div class="tool-group seg" role="radiogroup" aria-label="Pen">
+    <button role="radio" data-weight="Regular">Fine</button>
+    <button role="radio" data-weight="Bold">Thick</button>
+  </div>
+  <div class="tool-group seg" role="radiogroup" aria-label="Paper">
+    <button role="radio" data-paper="ruled" title="Ruled paper"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 5h12M2 9h12M2 13h12"/></svg><span class="vh">Ruled</span></button>
+    <button role="radio" data-paper="grid" title="Grid paper"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12M4 2v12M8 2v12M12 2v12"/></svg><span class="vh">Grid</span></button>
+    <button role="radio" data-paper="dots" title="Dotted paper"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="dot" d="M4 4h0M8 4h0M12 4h0M4 8h0M8 8h0M12 8h0M4 12h0M8 12h0M12 12h0"/></svg><span class="vh">Dotted</span></button>
+    <button role="radio" data-paper="blank" title="Blank paper"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="1"/></svg><span class="vh">Blank</span></button>
+  </div>
+</header>
+
+<main>
+  <article class="sheet" id="page" aria-label="Writing page">
+    <div class="sheet-head">
+      <h1 id="title" class="title" aria-label="Stavan"></h1>
+        <div class="actions" aria-label="Page actions" role="group">
+          <button id="replay" class="primary">Watch it write</button>
+          <button id="save-png">Save image</button>
+          <button id="save-svg">Save animation</button>
+          <button id="share">Copy link</button>
+        </div>
+      <p class="hand subtitle">a font made from 675 pages of my notes.</p>
+    </div>
+    <div class="sheet-body lined">
+      <textarea id="pad" class="hand" spellcheck="false" aria-label="Type here to write in the Stavan font"></textarea>
+      <div id="replay-layer" class="replay-layer" hidden></div>
+    </div>
+  </article>
+  <p class="status" id="status" role="status" aria-live="polite"></p>
+
+  <section class="desk-copy" aria-labelledby="how">
+    <h2 id="how">What you're looking at</h2>
+    <p>Every letter on this page was cut out of real Apple Pencil strokes from my GoodNotes notes: lectures, proofs, assignments, practice exams. Nothing was traced from photos and nothing was redrawn. Each letter and digit has five versions taken from different pages. They take turns as you type, so the same word never comes out the same twice. “Watch it write” replays the actual pen strokes in the order I wrote them.</p>
+  </section>
+
+  <article class="sheet" data-paper-fixed="grid" aria-labelledby="origins-h">
+    <div class="sheet-pad">
+      <h2 class="hand page-title" id="origins-h">where each letter came from</h2>
+      <p class="page-note">Pick a character to see its five versions and the word in my notes each one was cut from.</p>
+      <div id="picker" class="picker hand" role="listbox" aria-label="Characters"></div>
+      <div id="origins" class="origins" aria-live="polite"></div>
+    </div>
+  </article>
+
+  <article class="sheet" data-paper-fixed="dots" aria-labelledby="game-h">
+    <div class="sheet-pad">
+      <h2 class="hand page-title" id="game-h">real or font?</h2>
+      <p class="page-note">One of these words was written by hand in my notes. The other was typed in the font. Pick the real one.</p>
+      <div class="game" id="game">
+        <button class="choice" data-side="0" aria-label="Left word"></button>
+        <button class="choice" data-side="1" aria-label="Right word"></button>
+      </div>
+      <div class="game-foot">
+        <p id="game-result" class="game-result" aria-live="polite"></p>
+        <button id="game-next" class="ghost">Next word</button>
+      </div>
+    </div>
+  </article>
+
+  <section class="desk-copy use" aria-labelledby="use-h">
+    <h2 id="use-h">Use it</h2>
+    <p>Stavan is free for personal and commercial use under the SIL Open Font License.</p>
+
+    <h3>On your computer</h3>
+    <p class="row">
+      <a class="btn primary" href="dist/Stavan-Regular.ttf" download>Download Regular</a>
+      <a class="btn" href="dist/Stavan-Bold.ttf" download>Download Bold</a>
+    </p>
+    <p>Double-click a downloaded file and choose Install. The letter rotation works on its own in Pages, Keynote, TextEdit, Figma, Photoshop, Illustrator and every browser. In Microsoft Word, turn on Format › Font › Advanced › “Use Contextual Alternates” once.</p>
+
+    <h3>On a website</h3>
+    <p>Add this to your page, then put <code>class="stavan"</code> on anything.</p>
+    <div class="snippet"><pre id="css-snippet"></pre><button class="copy" data-copy="css-snippet">Copy</button></div>
+
+    <h3>As animated handwriting</h3>
+    <p>Write something on the page above and choose “Save animation”. You get an SVG that writes itself stroke by stroke. It plays in browsers and in GitHub READMEs. To generate them from code:</p>
+    <div class="snippet"><pre id="js-snippet"></pre><button class="copy" data-copy="js-snippet">Copy</button></div>
+
+    <h3>On every website at once</h3>
+    <p>Drag this button to your bookmarks bar. Click it on any website and the whole page switches to my handwriting until you reload.</p>
+    <p class="row"><a class="btn bookmarklet" id="bookmarklet" href="#">Write it by hand</a></p>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>Made by Stavan. Font under the <a href="https://openfontlicense.org">SIL Open Font License 1.1</a>, code under MIT. <a href="https://github.com/Whiteknight07/stavan-font">Source on GitHub</a>.</p>
+</footer>
+</body>
+</html>

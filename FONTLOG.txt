@@ -1,0 +1,27 @@
+FONTLOG for Stavan
+==================
+
+This file provides detailed information on the Stavan font software, as recommended by the SIL Open Font License.
+
+Basic information
+-----------------
+Stavan is a handwriting font made from 675 pages of the author's own GoodNotes lecture notes, written with an Apple
+Pencil. Letters were cut directly from the vector pen strokes stored in the notes (not scanned or traced), so they keep
+the speed, slant and roughness of everyday writing. Every letter and digit has five versions from different pages,
+which rotate through an OpenType `calt` feature. The rotation also counts spaces, so repeated words differ.
+
+Weights: Regular (the GoodNotes fine pen) and Bold (a thicker pen over the same strokes).
+Coverage: printable ASCII, Latin-1 accented letters, curly quotes, en and em dashes, ellipsis.
+
+ChangeLog
+---------
+2026-10-25 (Stavan) Version 1.000
+- First release: 150 characters, 705 variants, Regular and Bold, TTF/WOFF/WOFF2.
+
+Acknowledgements
+----------------
+N: Stavan
+W: https://github.com/Whiteknight07
+D: Handwriting, font pipeline
+
+Pipeline ideas from harshpreet931/harshpreet-hand (MIT), https://github.com/harshpreet931/harshpreet-hand
