@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "stavan-font",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-10-01",
+  "account_id": "34dcbe6a2ea4fe7491db96832f96ca2c",
+  "assets": {
+    "directory": "./_site",
+    "binding": "ASSETS",
+    "run_worker_first": ["/write.svg", "/write"]
+  },
+  "routes": [{ "pattern": "font.stavan.ai", "custom_domain": true }],
+  "observability": { "enabled": true }
+}

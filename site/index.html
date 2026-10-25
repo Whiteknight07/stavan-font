@@ -7,10 +7,12 @@
 <meta name="description" content="A free font made from 675 pages of real Apple Pencil notes. Type in it, watch it write itself, and download it.">
 <meta property="og:title" content="Stavan, a handwriting font">
 <meta property="og:description" content="A free font made from 675 pages of real Apple Pencil notes. Type in it, watch it write itself, and download it.">
-<meta property="og:image" content="https://whiteknight07.github.io/stavan-font/social.png">
+<meta property="og:image" content="https://font.stavan.ai/social.png">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#e9ecf1">
+<link rel="canonical" href="https://font.stavan.ai/">
+<meta property="og:url" content="https://font.stavan.ai/">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preload" href="dist/Stavan-Regular.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="dist/stavan.css">
@@ -44,22 +46,30 @@
     <button role="radio" data-paper="dots" title="Dotted paper"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="dot" d="M4 4h0M8 4h0M12 4h0M4 8h0M8 8h0M12 8h0M4 12h0M8 12h0M12 12h0"/></svg><span class="vh">Dotted</span></button>
     <button role="radio" data-paper="blank" title="Blank paper"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="1"/></svg><span class="vh">Blank</span></button>
   </div>
+  <button id="live" class="toggle" aria-pressed="true" title="The pen draws each letter as you type">Live ink</button>
 </header>
 
 <main>
   <article class="sheet" id="page" aria-label="Writing page">
     <div class="sheet-head">
       <h1 id="title" class="title" aria-label="Stavan"></h1>
-        <div class="actions" aria-label="Page actions" role="group">
-          <button id="replay" class="primary">Watch it write</button>
-          <button id="save-png">Save image</button>
-          <button id="save-svg">Save animation</button>
-          <button id="share">Copy link</button>
-        </div>
+      <div class="actions" aria-label="Page actions" role="group">
+        <button id="replay" class="primary">Watch it write</button>
+        <button id="share" title="Copies a link that writes your page out for whoever opens it">Send as a note</button>
+        <details class="menu" id="save-menu">
+          <summary>Save</summary>
+          <div class="menu-list" role="menu">
+            <button id="save-png" role="menuitem">Image (PNG)</button>
+            <button id="save-video" role="menuitem">Video of it writing</button>
+            <button id="save-svg" role="menuitem">Animated SVG</button>
+          </div>
+        </details>
+      </div>
       <p class="hand subtitle">a font made from 675 pages of my notes.</p>
     </div>
     <div class="sheet-body lined">
       <textarea id="pad" class="hand" spellcheck="false" aria-label="Type here to write in the Stavan font"></textarea>
+      <div id="ink-layer" class="ink-layer" aria-hidden="true"></div>
       <div id="replay-layer" class="replay-layer" hidden></div>
     </div>
   </article>
@@ -94,6 +104,23 @@
     </div>
   </article>
 
+  <article class="sheet" data-paper-fixed="grid" aria-labelledby="mono-h">
+    <div class="sheet-pad">
+      <h2 class="hand page-title" id="mono-h">code in my handwriting</h2>
+      <p class="page-note">Stavan Mono is the same handwriting squeezed into equal-width cells, so code still lines up. The five versions of each letter still take turns.</p>
+      <pre class="mono-sample" aria-label="Code sample in Stavan Mono"><span class="c"># fibonacci, written by hand</span>
+<span class="k">def</span> fib(n):
+    a, b = <span class="n">0</span>, <span class="n">1</span>
+    <span class="k">for</span> _ <span class="k">in</span> range(n):
+        a, b = b, a + b
+    <span class="k">return</span> a
+
+print(fib(<span class="n">10</span>))   <span class="c"># 55</span></pre>
+      <p class="row mono-dl"><a class="btn" href="dist/StavanMono-Regular.ttf" download>Download Stavan Mono</a></p>
+      <p class="page-note small">In VS Code, set <code>"editor.fontFamily": "Stavan Mono"</code> and <code>"editor.fontLigatures": true</code> (that second one switches the letter rotation on).</p>
+    </div>
+  </article>
+
   <section class="desk-copy use" aria-labelledby="use-h">
     <h2 id="use-h">Use it</h2>
     <p>Stavan is free for personal and commercial use under the SIL Open Font License.</p>
@@ -109,9 +136,17 @@
     <p>Add this to your page, then put <code>class="stavan"</code> on anything.</p>
     <div class="snippet"><pre id="css-snippet"></pre><button class="copy" data-copy="css-snippet">Copy</button></div>
 
+    <h3>As an image, with just a URL</h3>
+    <p>Any text, written by hand, as an animated image. It works anywhere an image does, including GitHub READMEs and Notion. Change the words in the link.</p>
+    <div class="snippet"><pre id="url-snippet"></pre><button class="copy" data-copy="url-snippet">Copy</button></div>
+    <p class="url-preview" id="url-preview"></p>
+
     <h3>As animated handwriting</h3>
-    <p>Write something on the page above and choose “Save animation”. You get an SVG that writes itself stroke by stroke. It plays in browsers and in GitHub READMEs. To generate them from code:</p>
+    <p>Write something on the page above and choose Save › Animated SVG. You get an SVG that writes itself stroke by stroke. It plays in browsers and in GitHub READMEs. To make them from code:</p>
     <div class="snippet"><pre id="js-snippet"></pre><button class="copy" data-copy="js-snippet">Copy</button></div>
+
+    <h3>With a real pen</h3>
+    <p>The letters are pen paths, not outlines, so a pen plotter or laser can write them with a single line, the way I did. Download the <a href="dist/Stavan-SingleLine.svg" download>single-line font</a> and pick it in Inkscape under Extensions › Text › Hershey Text (choose “Other SVG font”). Animated SVGs saved from this page are single-line too and plot as they are.</p>
 
     <h3>On every website at once</h3>
     <p>Drag this button to your bookmarks bar. Click it on any website and the whole page switches to my handwriting until you reload.</p>
@@ -120,7 +155,7 @@
 </main>
 
 <footer class="foot">
-  <p>Made by Stavan. Font under the <a href="https://openfontlicense.org">SIL Open Font License 1.1</a>, code under MIT. <a href="https://github.com/Whiteknight07/stavan-font">Source on GitHub</a>.</p>
+  <p>Made by Stavan. Font under the <a href="https://openfontlicense.org">SIL Open Font License 1.1</a>, code under MIT. <a href="https://github.com/Whiteknight07/stavan-font">Source on GitHub</a>. <a href="https://stavan.ai">stavan.ai</a></p>
 </footer>
 </body>
 </html>

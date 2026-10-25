@@ -7,7 +7,7 @@ them is very welcome.
 
 [Open an issue](https://github.com/Whiteknight07/stavan-font/issues/new?template=bad-letter.yml) with the character,
 a screenshot and the app you typed it in. Each letter has five versions, so say which one if you can. The
-[playground](https://whiteknight07.github.io/stavan-font/) shows all five under "where each letter came from".
+[playground](https://font.stavan.ai/) shows all five under "where each letter came from".
 
 ## Good first contributions
 
@@ -19,8 +19,8 @@ a screenshot and the app you typed it in. Each letter has five versions, so say 
 ## Working on the code
 
 ```sh
-# site: any static server works
-cd site && ln -sfn ../dist dist && python3 -m http.server 8000
+# site + /write.svg, locally (Cloudflare Workers)
+npm run dev
 
 # font: needs Python 3.12, potrace and requirements.txt
 cd hand && python build_font.py && python golden.py && node ../test/layout.test.mjs

@@ -1,17 +1,18 @@
 <p align="center">
-  <a href="https://whiteknight07.github.io/stavan-font/"><img src="assets/hero.svg" alt="Hi, this is Stavan. My real handwriting, as a font." width="760"></a>
+  <a href="https://font.stavan.ai"><img src="assets/hero.svg" alt="Hi, this is Stavan. My real handwriting, as a font." width="760"></a>
 </p>
 
 <p align="center">
   <b>A free handwriting font made from 675 pages of my real Apple Pencil notes.</b><br>
-  Every letter has five versions from different pages, and they take turns as you type.
+  Every letter has five versions from different pages, they take turns as you type, and it can write itself.
 </p>
 
 <p align="center">
-  <a href="https://whiteknight07.github.io/stavan-font/"><b>Try it in your browser</b></a> &nbsp;|&nbsp;
+  <a href="https://font.stavan.ai"><b>Try it at font.stavan.ai</b></a> &nbsp;|&nbsp;
   <a href="https://github.com/Whiteknight07/stavan-font/releases/latest"><b>Download</b></a> &nbsp;|&nbsp;
-  <a href="#use-it-on-a-website">Use it on a website</a> &nbsp;|&nbsp;
-  <a href="#animated-handwriting">Animated handwriting</a>
+  <a href="#handwriting-in-any-readme-with-a-url">Handwriting by URL</a> &nbsp;|&nbsp;
+  <a href="#stavan-mono-code-in-my-handwriting">Stavan Mono</a> &nbsp;|&nbsp;
+  <a href="#write-it-with-a-real-pen">Pen plotters</a>
 </p>
 
 <p align="center">
@@ -32,13 +33,26 @@ Top: a line from my notes. Bottom: the same line typed in the font.
   vector paths, so every letter is the exact path my pen took. Nothing was traced from photos or redrawn.
 - **Five versions of every letter and digit.** They rotate as you type (OpenType `calt`), and the rotation carries across
   spaces, so the same word never comes out the same twice.
-- **It can write itself.** Because the pen paths are kept in the order I drew them, the [playground](https://whiteknight07.github.io/stavan-font/)
-  and the [JS library](#animated-handwriting) can replay any text stroke by stroke.
-- **Full keyboard.** All of ASCII, accented letters (é, ü, ñ, ç…), curly quotes, dashes and ellipsis. 150 characters, 705 versions.
+- **It can write itself.** The pen paths are kept in the order I drew them, so any text can be replayed stroke by stroke:
+  live as you type on [font.stavan.ai](https://font.stavan.ai), as an animated SVG, as a video, or from a URL.
+- **Three fonts.** Stavan (Regular and Bold), Stavan Mono for code, and a single-line version for pen plotters.
+
+## The playground
+
+[font.stavan.ai](https://font.stavan.ai) is a notebook page you can write on:
+
+- **Live ink.** The pen draws each letter as you type it.
+- **Watch it write.** Replays the whole page with the real pen strokes, in the order I wrote them.
+- **Send as a note.** Copies a link. Whoever opens it watches your note being written.
+- **Save** an image, a video of it writing (MP4) or an animated SVG.
+- **Where each letter came from.** Pick a character to see its five versions inside the real words they were cut from.
+- **Real or font?** A game. One word was written in my notes, the other was typed in the font. Pick the real one.
+- My six real GoodNotes ink colours, ruled, grid, dotted or blank paper, and a bookmarklet that turns any website into
+  my handwriting.
 
 ## Install it on your computer
 
-Download `Stavan-Regular.ttf` and `Stavan-Bold.ttf` from the [latest release](https://github.com/Whiteknight07/stavan-font/releases/latest)
+Download the `.ttf` files from the [latest release](https://github.com/Whiteknight07/stavan-font/releases/latest)
 (or from [`dist/`](dist)), double-click each one and choose Install.
 
 The letter rotation turns on by itself in Pages, Keynote, TextEdit, Figma, Photoshop, Illustrator, InDesign and every
@@ -48,48 +62,79 @@ installed fonts, so use the web version there.
 ## Use it on a website
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Whiteknight07/stavan-font@1/dist/stavan.css">
+<link rel="stylesheet" href="https://font.stavan.ai/dist/stavan.css">
 
 <p class="stavan">Hello in my handwriting</p>
+<pre class="stavan-mono">print("and in code")</pre>
 ```
 
-Or use your own CSS: `font-family: "Stavan", cursive;`. The weights are 400 and 700.
-To self-host, copy `dist/*.woff2` and `dist/stavan.css` into your project.
+Or use your own CSS: `font-family: "Stavan", cursive;` (weights 400 and 700) or `font-family: "Stavan Mono", monospace;`.
+The same files are on jsDelivr (`https://cdn.jsdelivr.net/gh/Whiteknight07/stavan-font@1/dist/stavan.css`), or copy
+`dist/*.woff2` and `dist/stavan.css` into your project.
 
-## Animated handwriting
+## Handwriting in any README, with a URL
 
-Turn any text into an SVG that writes itself, using the real pen strokes in the order they were written.
-The SVG plays in browsers, in `<img>` tags and in GitHub READMEs, like the one at the top of this page.
+Put any text in the link and you get it written by hand, as an animated image:
 
-**In the browser:** type on the [playground](https://whiteknight07.github.io/stavan-font/) and choose "Save animation".
+```md
+![hello](https://font.stavan.ai/write.svg?text=hello%20there&color=007aff)
+```
 
-**From JavaScript:**
+![hello there](https://font.stavan.ai/write.svg?text=hello%20there&color=007aff)
+
+| Parameter | Default | |
+| --- | --- | --- |
+| `text` | `hello` | What to write. Use `%0A` for a new line. |
+| `size` | `64` | Pixels per em (8 to 300) |
+| `color` | `000000` | Ink colour: hex without `#`, or a name like `red` |
+| `weight` | `regular` | `regular` or `bold` |
+| `width` | none | Wrap lines at this many pixels |
+| `bg` | none | Background colour |
+| `speed` | `13` | Pen speed, in x-heights per second |
+| `static` | `0` | `1` for a still image |
+
+## Animated handwriting from code
 
 ```js
-import { load } from "https://cdn.jsdelivr.net/gh/Whiteknight07/stavan-font@1/site/stavan.js";
+import { load } from "https://font.stavan.ai/stavan.js";
 
-const hand = await load("https://cdn.jsdelivr.net/gh/Whiteknight07/stavan-font@1/site/data/");
+const hand = await load("https://font.stavan.ai/data/");
 document.body.insertAdjacentHTML("beforeend", hand.svg("hello there", { size: 64, animate: true, color: "#007aff" }));
 ```
 
-`hand.svg(text, options)` takes `size` (px per em), `color`, `maxWidth` (px, wraps at spaces), `animate`, `speed`
-(x-heights per second, default 13) and `background`. `hand.draw(ctx, text, options)` draws onto a canvas instead.
+`hand.svg(text, options)` takes `size` (px per em), `color`, `maxWidth` (px), `animate`, `speed`, `background` and `tight`
+(crop to the ink). `hand.draw(ctx, text, options)` draws onto a canvas, and `hand.drawAt(ctx, strokes, timing, t)` draws a
+replay frame at time `t`.
 
-**From the command line** (Node 18+):
+From the command line (Node 18+):
 
 ```sh
 node site/write.mjs "Hi, this is Stavan." --size 60 --color "#007aff" > hello.svg
 node site/write.mjs "thick and still" --weight Bold --static > still.svg
 ```
 
-## Turn the whole internet into my handwriting
+## Stavan Mono: code in my handwriting
 
-The [playground](https://whiteknight07.github.io/stavan-font/#use-h) has a bookmarklet. Drag it to your bookmarks bar,
-click it on any site, and every page switches to Stavan until you reload.
+The same handwriting, squeezed into equal-width cells so code lines up. The five versions still take turns.
+Download `StavanMono-Regular.ttf`, then in VS Code set:
+
+```json
+"editor.fontFamily": "Stavan Mono",
+"editor.fontLigatures": true
+```
+
+The second line switches the letter rotation on (VS Code turns `calt` off unless ligatures are enabled).
+
+## Write it with a real pen
+
+The letters are pen paths, not outlines, so a pen plotter (AxiDraw, iDraw) or a laser can write them with a single line,
+the way I did. [`dist/Stavan-SingleLine.svg`](dist/Stavan-SingleLine.svg) is a single-line SVG font: in Inkscape, open
+Extensions › Text › Hershey Text and choose "Other SVG font". Animated SVGs from the playground or `/write.svg?static=1`
+are single-line too and plot as they are.
 
 ## How it was made
 
-The pipeline lives in [`hand/`](hand). It takes GoodNotes PDF exports and ends with TTF and WOFF2 files.
+The pipeline lives in [`hand/`](hand). It takes GoodNotes PDF exports and ends with the fonts and the site's data.
 
 | Step | Script | What it does |
 | --- | --- | --- |
@@ -100,11 +145,14 @@ The pipeline lives in [`hand/`](hand). It takes GoodNotes PDF exports and ends w
 | 5 | `retrieve.py` | Finds rare characters (crossed Z, J, Q, ?) by shape among unlabelled strokes, then has them verified in context |
 | 6 | `select_variants.py`, `qa.py` | Ranks samples by how typical they are, reviews 16 candidates per character, keeps 5 varied approved ones |
 | 7 | `design.py`, `construct.py` | Light-touch sizing that keeps each letter's own size and bounce; builds accents and missing symbols from my own strokes |
-| 8 | `build_font.py` | Round GoodNotes-style pen, then potrace, then TrueType; adds the 5-slot rotation, kerning, WOFF/WOFF2 and the web data |
-| 9 | `export_words.py` | Exports the source words for the playground's "where each letter came from" and "real or font?" |
+| 8 | `build_font.py` | Round GoodNotes-style pen, then potrace, then TrueType; the 5-slot rotation, kerning, Mono, single-line SVG and web data |
+| 9 | `export_words.py` | Exports the source words for "where each letter came from" and "real or font?" |
 
-Some characters never appear in the notes. These were built from pieces of my own strokes: `! ^ \ # % $ @ & { }` and the backtick,
-`…`, curly quotes, dashes and the accents.
+All five versions of a character share one advance width, each centred in it. Browsers restart the rotation differently
+when a line wraps, so equal widths keep line breaks and the cursor in the same place whichever version an app shows.
+
+Some characters never appear in the notes. These were built from pieces of my own strokes: `! ^ \ # % $ @ & { }` and the
+backtick, `…`, curly quotes, dashes and the accents.
 
 ### Build it yourself
 
@@ -113,18 +161,19 @@ uv venv && uv pip install -r requirements.txt   # or: pip install -r requirement
 brew install potrace                             # or: apt install potrace
 cd hand && ../.venv/bin/python build_font.py     # design/ -> dist/ fonts + site/data/
 python golden.py && node ../test/layout.test.mjs # check the site's layout against HarfBuzz
+cd .. && npm run dev                             # the site + /write.svg locally (Cloudflare Workers)
 ```
 
 The source notes (`data/`) and intermediate files (`work/`) are private and not in this repo, so steps 1 to 7 need your
-own notes. `build_font.py` rebuilds the font from `design/` alone. To drop a bad version of a letter, add
+own notes. `build_font.py` rebuilds everything from `design/` alone. To drop a bad version of a letter, add
 `[char, word_id, group]` to `design/reject.json` (the ids are in `design/glyphs.json` under `src`), then rerun steps 6 to 8.
 
-Want to make a font from your own notes? Fork this repo, export your GoodNotes notebooks as PDF into `data/`, and run
-the steps in order.
+Want a font from your own notes? Fork this repo, export your GoodNotes notebooks as PDF into `data/`, and run the steps in order.
 
 ## License
 
-The font is free for personal and commercial use under the [SIL Open Font License 1.1](OFL.txt). You can use it,
-embed it and bundle it, but not sell the font files on their own. The code is [MIT](LICENSE).
+The fonts are free for personal and commercial use under the [SIL Open Font License 1.1](OFL.txt). You can use them,
+embed them and bundle them, but not sell the font files on their own. The code is [MIT](LICENSE).
 
 Inspired by [harshpreet931/harshpreet-hand](https://github.com/harshpreet931/harshpreet-hand) (MIT); `build_font.py` is adapted from it.
+Made by [Stavan](https://stavan.ai).

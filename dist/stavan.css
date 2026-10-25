@@ -1,3 +1,4 @@
+/* Stavan: a handwriting font made from real Apple Pencil notes. https://font.stavan.ai */
 @font-face {
   font-family: "Stavan";
   src: url("Stavan-Regular.woff2") format("woff2"), url("Stavan-Regular.woff") format("woff");
@@ -10,9 +11,16 @@
   font-weight: 700;
   font-display: swap;
 }
-.stavan {
-  font-family: "Stavan", cursive;
+@font-face {
+  font-family: "Stavan Mono";
+  src: url("StavanMono-Regular.woff2") format("woff2"), url("StavanMono-Regular.woff") format("woff");
+  font-weight: 400;
+  font-display: swap;
+}
+.stavan, .stavan-mono {
   font-size: 1.2em;          /* x-height is small relative to the em, like most handwriting */
   line-height: 1.7;          /* room for long descenders and tall capitals */
   font-feature-settings: "calt" 1, "kern" 1;   /* calt rotates 5 real variants per letter */
 }
+.stavan { font-family: "Stavan", cursive; }
+.stavan-mono { font-family: "Stavan Mono", monospace; }

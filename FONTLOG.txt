@@ -11,10 +11,15 @@ the speed, slant and roughness of everyday writing. Every letter and digit has f
 which rotate through an OpenType `calt` feature. The rotation also counts spaces, so repeated words differ.
 
 Weights: Regular (the GoodNotes fine pen) and Bold (a thicker pen over the same strokes).
+Also: Stavan Mono (fixed width, for code) and Stavan Single Line (SVG font for pen plotters).
 Coverage: printable ASCII, Latin-1 accented letters, curly quotes, en and em dashes, ellipsis.
 
 ChangeLog
 ---------
+2026-10-25 (Stavan) Version 1.100
+- Added Stavan Mono (fixed width) and Stavan Single Line (SVG font of pen centrelines).
+- All five versions of a character share one advance width, so layout is identical in every app.
+
 2026-10-25 (Stavan) Version 1.000
 - First release: 150 characters, 705 variants, Regular and Bold, TTF/WOFF/WOFF2.
 

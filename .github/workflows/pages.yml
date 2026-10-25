@@ -1,8 +1,10 @@
-name: Deploy site
+name: Redirect GitHub Pages to font.stavan.ai
 
+# The site lives at https://font.stavan.ai (Cloudflare). This keeps old github.io links working.
 on:
   push:
     branches: [main]
+    paths: [".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -21,14 +23,17 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Assemble site (playground + font files)
+      - name: Write redirect pages
         run: |
-          mkdir -p _site/dist
-          cp -r site/. _site/
-          rm -rf _site/dist && mkdir -p _site/dist
-          cp dist/*.ttf dist/*.woff dist/*.woff2 dist/stavan.css dist/notes-vs-font.png _site/dist/
-          rm -f _site/write.mjs
+          mkdir -p _site
+          cat > _site/index.html <<'HTML'
+          <!doctype html><meta charset="utf-8"><title>Stavan moved to font.stavan.ai</title>
+          <link rel="canonical" href="https://font.stavan.ai/">
+          <meta http-equiv="refresh" content="0; url=https://font.stavan.ai/">
+          <script>location.replace("https://font.stavan.ai" + location.pathname.replace(/^\/stavan-font/, "") + location.search + location.hash)</script>
+          <p>Stavan lives at <a href="https://font.stavan.ai/">font.stavan.ai</a>.</p>
+          HTML
+          cp _site/index.html _site/404.html
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

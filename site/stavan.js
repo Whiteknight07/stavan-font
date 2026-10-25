@@ -51,24 +51,36 @@ export class Hand {
     return { glyphs: out, width: x };
   }
 
-  // Text -> lines (font units). Wraps at spaces when maxWidth (font units) is given.
+  // Text -> lines (font units). Wraps like a browser textarea when maxWidth (font units) is given:
+  // at spaces (which hang at the line end), after a hyphen between letters, around dashes, and
+  // mid-word only when a word is wider than the line. All versions of a letter share one width,
+  // so where lines break never depends on which version was picked.
   layout(text, maxWidth = Infinity) {
     const lines = [];
+    const adv = (g) => this.m.adv[g.name] || this.m.adv.space;
     for (const para of String(text).replace(/\r/g, "").split("\n")) {
-      const { glyphs, width } = this.shape(para);
-      if (width <= maxWidth || !glyphs.length) { lines.push({ glyphs, width }); continue; }
-      let start = 0, lastBreak = -1;
-      for (let i = 0; i < glyphs.length; i++) {
-        if (glyphs[i].ch === " ") lastBreak = i;
-        const end = glyphs[i].x + (this.m.adv[glyphs[i].name] || this.m.adv.space);
-        if (end - glyphs[start].x > maxWidth && i > start) {
-          const cut = lastBreak > start ? lastBreak : i; // break at the last space, or mid-word if none
-          lines.push(this._slice(glyphs, start, cut));
-          start = lastBreak > start ? cut + 1 : cut;
-          lastBreak = -1;
+      const { glyphs } = this.shape(para);
+      const chars = glyphs.map((g) => g.ch);
+      let start = 0;
+      if (!glyphs.length) { lines.push({ glyphs: [], width: 0 }); continue; }
+      while (start < glyphs.length) {
+        const x0 = glyphs[start].x;
+        let cand = null, over = -1;
+        for (let i = start; i < glyphs.length; i++) {
+          const ch = chars[i];
+          if (ch === " ") { cand = { end: i, next: i + 1 }; continue; }
+          if (ch === "\u2014" && i > start) cand = { end: i, next: i };              // before an em dash
+          if (glyphs[i].x + adv(glyphs[i]) - x0 > maxWidth && i > start) { over = i; break; }
+          const prev = chars[i - 1] || "", next = chars[i + 1] || "";
+          if ((ch === "-" && /\p{L}/u.test(prev) && next && !/[0-9\s]/.test(next)) || ch === "\u2013" || ch === "\u2014")
+            cand = { end: i + 1, next: i + 1 };                                        // after a hyphen or dash
         }
+        if (over < 0) { lines.push(this._slice(glyphs, start, glyphs.length)); break; }
+        if (!cand || cand.next <= start) cand = { end: over, next: over };           // word longer than the line
+        lines.push(this._slice(glyphs, start, cand.end));
+        start = cand.next;
+        while (chars[start] === " ") start++;                                          // extra spaces hang too
       }
-      lines.push(this._slice(glyphs, start, glyphs.length));
     }
     const width = Math.max(0, ...lines.map((l) => l.width));
     return { lines, width, height: lines.length * this.lineHeight };
@@ -100,7 +112,7 @@ export class Hand {
         glyphStrokes.forEach((flat, si) => {
           const pts = [];
           for (let i = 0; i < flat.length; i += 2) pts.push([dx + flat[i], by - flat[i + 1]]);
-          out.push({ pts, line: li, word, ch: g.ch, first: si === 0 });
+          out.push({ pts, line: li, word, ch: g.ch, first: si === 0, key: `${li}:${Math.round(g.x)}:${g.name}:${si}` });
         });
       }
     });
@@ -108,17 +120,23 @@ export class Hand {
   }
 
   // SVG string. Options: size (px per em), color, maxWidth (px), pad (px), animate, speed (x-heights/sec),
-  // background (CSS color or null).
+  // background (CSS color or null), tight (crop height to the ink).
   svg(text, o = {}) {
     const size = o.size ?? 64, color = o.color ?? "#000", pad = o.pad ?? 0.2 * size;
     const scale = size / this.m.upm;
     const maxW = o.maxWidth ? (o.maxWidth - 2 * pad) / scale : Infinity;
     const { strokes, layout } = this.penStrokes(text, maxW);
     const padU = pad / scale;
-    const W = layout.width + 2 * padU, H = layout.height + 2 * padU;
     const pen = o.pen ?? this.m.pen;
+    let W = layout.width + 2 * padU, H = layout.height + 2 * padU, y0 = 0;
+    if (o.tight && strokes.length) { // crop the height to the ink instead of whole line boxes
+      let lo = Infinity, hi = -Infinity;
+      for (const st of strokes) for (const p of st.pts) { lo = Math.min(lo, p[1]); hi = Math.max(hi, p[1]); }
+      y0 = lo - pen / 2;
+      H = hi - lo + pen + 2 * padU;
+    }
     const r = (v) => Math.round(v * 10) / 10;
-    const d = (s) => "M" + s.pts.map((p) => `${r(p[0] + padU)} ${r(p[1] + padU)}`).join("L");
+    const d = (s) => "M" + s.pts.map((p) => `${r(p[0] + padU)} ${r(p[1] + padU - y0)}`).join("L");
     const timing = o.animate ? this.timing(strokes, o.speed) : null;
     let style = "", paths = "";
     if (timing) {
@@ -134,6 +152,37 @@ export class Hand {
     const label = String(text).replace(/[<&"]/g, (c) => ({ "<": "&lt;", "&": "&amp;", '"': "&quot;" }[c]));
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${r(W)} ${r(H)}" width="${r(W * scale)}" height="${r(H * scale)}" role="img" aria-label="${label}">` +
       `${style}${bg}<g class="all" fill="none" stroke="${color}" stroke-width="${r(pen)}" stroke-linecap="round" stroke-linejoin="round">${paths}</g></svg>`;
+  }
+
+  // SVG path data for one positioned stroke (as returned by penStrokes), offset by (ox, oy) font units.
+  static pathData(s, ox = 0, oy = 0) {
+    const r = (v) => Math.round(v * 10) / 10;
+    const d = "M" + s.pts.map((p) => `${r(p[0] + ox)} ${r(p[1] + oy)}`).join("L");
+    return s.pts.length === 1 ? d + "l.1 0" : d;
+  }
+
+  // Draw strokes as they look `t` seconds into a replay (partially drawn strokes are cut by length).
+  drawAt(ctx, strokes, timing, t) {
+    for (let i = 0; i < strokes.length; i++) {
+      const start = timing.start[i];
+      if (t <= start) break;
+      const pts = strokes[i].pts;
+      const f = Math.min(1, (t - start) / timing.dur[i]);
+      ctx.beginPath();
+      ctx.moveTo(...pts[0]);
+      if (pts.length === 1) { ctx.lineTo(pts[0][0] + 0.1, pts[0][1]); ctx.stroke(); continue; }
+      let total = 0;
+      for (let j = 1; j < pts.length; j++) total += Math.hypot(pts[j][0] - pts[j - 1][0], pts[j][1] - pts[j - 1][1]);
+      let left = total * f;
+      for (let j = 1; j < pts.length && left > 0; j++) {
+        const seg = Math.hypot(pts[j][0] - pts[j - 1][0], pts[j][1] - pts[j - 1][1]);
+        if (seg <= left) { ctx.lineTo(...pts[j]); left -= seg; continue; }
+        const k = left / seg;
+        ctx.lineTo(pts[j - 1][0] + (pts[j][0] - pts[j - 1][0]) * k, pts[j - 1][1] + (pts[j][1] - pts[j - 1][1]) * k);
+        left = 0;
+      }
+      ctx.stroke();
+    }
   }
 
   // Pen timing: constant pen speed, short lifts between strokes, longer ones between words and lines.

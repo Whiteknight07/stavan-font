@@ -38,12 +38,14 @@ jobs:
         run: |
           python - <<'PY'
           from fontTools.ttLib import TTFont
-          for w in ("Regular", "Bold"):
-              f = TTFont(f"dist/Stavan-{w}.ttf")
+          for w in ("Stavan-Regular", "Stavan-Bold", "StavanMono-Regular"):
+              f = TTFont(f"dist/{w}.ttf")
               cmap = f.getBestCmap()
               missing = [chr(c) for c in range(0x20, 0x7F) if c not in cmap]
               assert not missing, f"{w} is missing {missing}"
               assert "calt" in [r.FeatureTag for r in f["GSUB"].table.FeatureList.FeatureRecord]
+              if "Mono" in w:
+                  assert len({a for a, _ in f["hmtx"].metrics.values()}) == 1, "mono advances differ"
               print(w, len(f.getGlyphOrder()), "glyphs, all printable ASCII present")
           PY
       - uses: actions/upload-artifact@v4
@@ -52,3 +54,4 @@ jobs:
           path: |
             dist/*.ttf
             dist/*.woff2
+            dist/*.svg

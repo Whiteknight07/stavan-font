@@ -1,6 +1,6 @@
-import { load } from "./stavan.js";
+import { load, Hand } from "./stavan.js";
 
-const CDN = "https://cdn.jsdelivr.net/gh/Whiteknight07/stavan-font@1";
+const SITE = "https://font.stavan.ai";
 const DEFAULT_TEXT = `Hi, this is my handwriting, typed.
 Every letter here was cut out of real Apple Pencil strokes from my lecture notes. Each one has five versions that take turns as you type, so no two words come out the same.
 This page is yours now. Type over it.`;
@@ -9,7 +9,8 @@ const INKS = ["#000000", "#d10000", "#007aff", "#f49923", "#636363", "#82218c"];
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const root = document.documentElement;
-const pad = $("#pad"), layer = $("#replay-layer"), status = $("#status");
+const pad = $("#pad"), layer = $("#replay-layer"), inkLayer = $("#ink-layer"), status = $("#status");
+const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const hands = {};
 const getHand = (w) => (hands[w] ||= load("data/", w));
@@ -24,18 +25,26 @@ const state = {
   size: Math.min(72, Math.max(20, +q.get("size") || (innerWidth < 640 ? 26 : 36))),
   weight: q.get("pen") === "thick" ? "Bold" : "Regular",
   paper: ["ruled", "grid", "dots", "blank"].includes(q.get("paper")) ? q.get("paper") : "ruled",
+  live: q.get("live") !== "0",
 };
+const playOnOpen = q.get("play") === "1";
+
+function shareParams(play) {
+  const p = new URLSearchParams();
+  if (state.text !== DEFAULT_TEXT) p.set("t", state.text);
+  if (state.ink !== INKS[0]) p.set("ink", state.ink.slice(1));
+  if (state.size !== 36) p.set("size", state.size);
+  if (state.weight === "Bold") p.set("pen", "thick");
+  if (state.paper !== "ruled") p.set("paper", state.paper);
+  if (!state.live) p.set("live", "0");
+  if (play) p.set("play", "1");
+  return p.toString();
+}
 let urlTimer;
 function saveURL() {
   clearTimeout(urlTimer);
   urlTimer = setTimeout(() => {
-    const p = new URLSearchParams();
-    if (state.text !== DEFAULT_TEXT) p.set("t", state.text);
-    if (state.ink !== INKS[0]) p.set("ink", state.ink.slice(1));
-    if (state.size !== 36) p.set("size", state.size);
-    if (state.weight === "Bold") p.set("pen", "thick");
-    if (state.paper !== "ruled") p.set("paper", state.paper);
-    const h = p.toString();
+    const h = shareParams(false);
     history.replaceState(null, "", h ? "#" + h : location.pathname + location.search);
   }, 250);
 }
@@ -59,13 +68,17 @@ function apply() {
   setRadio(".toolbar", "data-weight", state.weight);
   setRadio(".toolbar", "data-paper", state.paper);
   $("#size").value = state.size;
+  $("#live").setAttribute("aria-pressed", String(state.live));
   grow();
   saveURL();
+  renderInk(false);
+  updateUrlSnippet();
 }
 $$("[data-ink]").forEach((b) => b.addEventListener("click", () => { state.ink = b.dataset.ink; apply(); }));
 $$(".toolbar [data-weight]").forEach((b) => b.addEventListener("click", () => { state.weight = b.dataset.weight; apply(); getHand(state.weight); }));
 $$(".toolbar [data-paper]").forEach((b) => b.addEventListener("click", () => { state.paper = b.dataset.paper; apply(); }));
 $("#size").addEventListener("input", (e) => { state.size = +e.target.value; apply(); });
+$("#live").addEventListener("click", () => { state.live = !state.live; apply(); pad.focus(); });
 // arrow keys move between options inside a radio group
 $$('[role="radiogroup"]').forEach((g) => g.addEventListener("keydown", (e) => {
   const items = $$('[role="radio"]', g), i = items.indexOf(document.activeElement);
@@ -80,8 +93,39 @@ function grow() {
   pad.style.height = pad.scrollHeight + "px";
 }
 pad.value = state.text;
-pad.addEventListener("input", () => { state.text = pad.value; grow(); saveURL(); stopReplay(); });
-addEventListener("resize", grow);
+pad.addEventListener("input", () => { state.text = pad.value; grow(); saveURL(); stopReplay(); renderInk(true); });
+addEventListener("resize", () => { grow(); renderInk(false); });
+
+// ---------- live ink: the pen draws each new letter as you type ----------
+// The textarea stays in charge of the caret and selection; its text is made transparent and the
+// real pen strokes are drawn on top. Strokes shared with the previous render stay put; new ones animate.
+let inkKeys = [], inkSeq = 0;
+async function renderInk(animateNew) {
+  const seq = ++inkSeq;
+  const body = pad.parentElement;
+  if (!state.live) { body.classList.remove("live"); inkLayer.innerHTML = ""; inkKeys = []; return; }
+  const hand = await getHand(state.weight);
+  if (seq !== inkSeq) return;
+  const box = contentBox(), scale = state.size / 1000;
+  const { strokes, layout } = hand.penStrokes(pad.value, box.width / scale);
+  const keys = strokes.map((s) => s.key);
+  let k = 0;
+  while (k < keys.length && k < inkKeys.length && keys[k] === inkKeys[k]) k++;
+  const fresh = strokes.length - k;
+  const animate = animateNew && fresh > 0 && fresh <= 60 && !reduceMotion();
+  const timing = animate ? hand.timing(strokes.slice(k), 26) : null;
+  const paths = strokes.map((s, i) => {
+    const d = Hand.pathData(s);
+    if (!animate || i < k) return `<path d="${d}"/>`;
+    const j = i - k;
+    return `<path class="s" pathLength="1" style="--t:${Math.max(0, timing.start[j] - 0.15).toFixed(3)}s;--d:${timing.dur[j].toFixed(3)}s" d="${d}"/>`;
+  }).join("");
+  const W = box.width / scale, H = Math.max(layout.height, hand.lineHeight);
+  inkLayer.innerHTML = `<svg viewBox="0 0 ${W.toFixed(1)} ${H.toFixed(1)}" width="${box.width}" height="${(H * scale).toFixed(1)}">` +
+    `<g fill="none" stroke="currentColor" stroke-width="${hand.m.pen}" stroke-linecap="round" stroke-linejoin="round">${paths}</g></svg>`;
+  inkKeys = keys;
+  body.classList.add("live");
+}
 
 function contentBox() {
   const cs = getComputedStyle(pad);
@@ -102,8 +146,9 @@ async function replay() {
   layer.innerHTML = svg;
   layer.hidden = false;
   pad.style.visibility = "hidden";
+  inkLayer.style.visibility = "hidden";
   $("#replay").textContent = "Stop";
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reduce = reduceMotion();
   const strokes = hand.penStrokes(text, box.width / (state.size / 1000)).strokes;
   const total = reduce ? 0.6 : hand.timing(strokes).total;
   const top = $("#page").getBoundingClientRect().top;
@@ -117,6 +162,7 @@ function stopReplay() {
   layer.hidden = true;
   layer.innerHTML = "";
   pad.style.visibility = "";
+  inkLayer.style.visibility = "";
   $("#replay").textContent = "Watch it write";
 }
 $("#replay").addEventListener("click", replay);
@@ -132,6 +178,7 @@ function download(blob, name) {
 const fileName = () => "stavan-" + (pad.value.trim().split(/\s+/).slice(0, 3).join("-").replace(/[^\w-]/g, "").toLowerCase() || "note");
 
 $("#save-svg").addEventListener("click", async () => {
+  closeMenu();
   const hand = await getHand(state.weight);
   const box = contentBox();
   const svg = hand.svg(pad.value || " ", { size: state.size, maxWidth: box.width + 0.8 * state.size, animate: true, color: state.ink, background: "#ffffff" });
@@ -140,6 +187,7 @@ $("#save-svg").addEventListener("click", async () => {
 });
 
 $("#save-png").addEventListener("click", async () => {
+  closeMenu();
   const hand = await getHand(state.weight);
   const box = contentBox();
   const F = state.size, L = 1.7 * F, k = 2;
@@ -175,12 +223,72 @@ function drawPaper(ctx, W, H, box, F, L) {
 }
 
 $("#share").addEventListener("click", async () => {
-  clearTimeout(urlTimer);
-  state.text = pad.value; saveURL();
-  await new Promise((r) => setTimeout(r, 300));
-  try { await navigator.clipboard.writeText(location.href); say("Link copied. It opens this page with your text."); }
-  catch { say("Copy this page's address to share it."); }
+  state.text = pad.value;
+  const url = `${location.origin}${location.pathname}#${shareParams(true)}`;
+  try { await navigator.clipboard.writeText(url); say("Link copied. Whoever opens it will watch your note being written."); }
+  catch { prompt("Copy this link:", url); }
 });
+
+// ---------- video: record the page writing itself ----------
+let recording = false;
+$("#save-video").addEventListener("click", async () => {
+  closeMenu();
+  if (recording) return;
+  if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) return say("This browser can't record video. Try Chrome, Edge or Safari.");
+  const types = ["video/mp4;codecs=avc1.42E01E", "video/mp4", "video/webm;codecs=vp9", "video/webm"];
+  const mime = types.find((t) => MediaRecorder.isTypeSupported(t));
+  if (!mime) return say("This browser can't record video. Try Chrome, Edge or Safari.");
+  recording = true;
+  const hand = await getHand(state.weight);
+  const box = contentBox();
+  const F = state.size, L = 1.7 * F, k = 2, W = pad.clientWidth;
+  const text = pad.value.trim() ? pad.value : DEFAULT_TEXT;
+  const { strokes, layout } = hand.penStrokes(text, box.width / (F / 1000));
+  const H = Math.ceil(box.top + layout.lines.length * L + 1.2 * L);
+  const c = Object.assign(document.createElement("canvas"), { width: Math.round((W * k) / 2) * 2, height: Math.round((H * k) / 2) * 2 });
+  const ctx = c.getContext("2d");
+  const timing = hand.timing(strokes);
+  const total = timing.total + 1.5;
+  const frame = (t) => {
+    ctx.setTransform(k, 0, 0, k, 0, 0);
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
+    drawPaper(ctx, W, H, box, F, L);
+    ctx.save();
+    ctx.translate(box.left, box.top);
+    ctx.scale(F / 1000, F / 1000);
+    ctx.strokeStyle = state.ink; ctx.lineWidth = hand.m.pen; ctx.lineCap = ctx.lineJoin = "round";
+    hand.drawAt(ctx, strokes, timing, t);
+    ctx.restore();
+  };
+  frame(0);
+  const rec = new MediaRecorder(c.captureStream(60), { mimeType: mime, videoBitsPerSecond: 8_000_000 });
+  const chunks = [];
+  rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+  const stopped = new Promise((r) => (rec.onstop = r));
+  rec.start();
+  const t0 = performance.now();
+  await new Promise((done) => {
+    const tick = () => {
+      const t = (performance.now() - t0) / 1000;
+      frame(t);
+      say(`Recording the video, ${Math.max(0, Math.ceil(total - t))} s left. Keep this tab open.`);
+      if (t < total) requestAnimationFrame(tick); else done();
+    };
+    requestAnimationFrame(tick);
+  });
+  rec.stop();
+  await stopped;
+  download(new Blob(chunks, { type: mime.split(";")[0] }), fileName() + (mime.includes("mp4") ? ".mp4" : ".webm"));
+  say("Video saved.");
+  recording = false;
+});
+
+// ---------- save menu ----------
+const menu = $("#save-menu");
+function closeMenu() { menu.open = false; }
+document.addEventListener("click", (e) => { if (menu.open && !menu.contains(e.target)) closeMenu(); });
+menu.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeMenu(); menu.querySelector("summary").focus(); } });
+
 
 // ---------- drawing helpers for stroke lists (font units, y up, baseline 0) ----------
 const r1 = (v) => Math.round(v);
@@ -291,22 +399,34 @@ async function setupGame() {
 
 // ---------- snippets and bookmarklet ----------
 $("#css-snippet").textContent =
-  `<link rel="stylesheet" href="${CDN}/dist/stavan.css">\n<p class="stavan">Hello in my handwriting</p>`;
+  `<link rel="stylesheet" href="${SITE}/dist/stavan.css">\n<p class="stavan">Hello in my handwriting</p>`;
 $("#js-snippet").textContent =
-  `import { load } from "${CDN}/site/stavan.js";\n\nconst hand = await load("${CDN}/site/data/");\nconst svg = hand.svg("hello there", { size: 64, animate: true, color: "#007aff" });\ndocument.body.insertAdjacentHTML("beforeend", svg);`;
+  `import { load } from "${SITE}/stavan.js";\n\nconst hand = await load("${SITE}/data/");\nconst svg = hand.svg("hello there", { size: 64, animate: true, color: "#007aff" });\ndocument.body.insertAdjacentHTML("beforeend", svg);`;
 $$(".copy").forEach((b) => b.addEventListener("click", async () => {
   try { await navigator.clipboard.writeText($("#" + b.dataset.copy).textContent); b.textContent = "Copied"; }
   catch { b.textContent = "Select and copy"; }
   setTimeout(() => (b.textContent = "Copy"), 1600);
 }));
-const bm = `(()=>{const d=document,l=d.createElement('link');l.rel='stylesheet';l.href='${CDN}/dist/stavan.css';` +
+const bm = `(()=>{const d=document,l=d.createElement('link');l.rel='stylesheet';l.href='${SITE}/dist/stavan.css';` +
   `d.head.append(l);const s=d.createElement('style');s.textContent='body,body *:not(code):not(pre):not(kbd):not(samp):not(svg *):not([class*=icon]):not([class*=Icon]){font-family:Stavan,cursive!important}';d.head.append(s)})()`;
 $("#bookmarklet").href = "javascript:" + encodeURIComponent(bm);
 $("#bookmarklet").addEventListener("click", (e) => { e.preventDefault(); say("Drag that button to your bookmarks bar, then click it on any site."); });
 
+function updateUrlSnippet() {
+  const t = "hello from my README";
+  const url = `${SITE}/write.svg?text=${encodeURIComponent(t)}&color=${state.ink.slice(1)}`;
+  $("#url-snippet").textContent = `![${t}](${url})`;
+  const img = $("#url-preview img") || $("#url-preview").appendChild(Object.assign(document.createElement("img"), { alt: t, height: 70 }));
+  if (img.dataset.src !== url) { img.dataset.src = url; img.src = url; }
+}
+
 // ---------- start ----------
 apply();
-document.fonts.ready.then(grow);
+document.fonts.ready.then(() => { grow(); renderInk(false); });
+if (playOnOpen) {
+  // opened from "Send as a note": write the note out for the reader
+  Promise.all([getHand(state.weight), document.fonts.ready]).then(() => setTimeout(replay, 1300));
+}
 getHand("Regular").then((hand) => {
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   $("#title").innerHTML = hand.svg("Stavan", { size: 54, pad: 0, animate: !reduce, speed: 6, color: "currentColor" });

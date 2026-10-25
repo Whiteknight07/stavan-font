@@ -34,7 +34,7 @@ DIST = os.path.join(ROOT, "dist")
 
 FAMILY = "Stavan"
 PS_FAMILY = "Stavan"
-VERSION = "1.000"
+VERSION = "1.100"
 OFL = ("This Font Software is licensed under the SIL Open Font License, Version 1.1. "
        "This license is available with a FAQ at: https://openfontlicense.org")
 UPM = 1000
@@ -42,10 +42,32 @@ S = 440                 # font units per x-height (design unit)
 SB = 0.13 * S           # ink-to-ink half gap (measured in the notes: 0.26 xh between letters)
 SPACE = 0.78 * S
 NSLOT = 5                # every letter/digit gets 5 rotating slots (real variants, repeated if fewer)
-SLOT_SB = [1.0, 0.9, 1.12, 0.95, 1.06]     # uneven letter spacing, like the notes
-SLOT_SPACE = [1.0, 0.9, 1.15, 0.95, 1.08]  # uneven word gaps
+# All five versions of a character share one advance width (each is centred in it), so text takes the
+# same space whichever version an app picks. Browsers restart the rotation differently at line wraps;
+# equal widths keep line breaks and caret positions identical everywhere.
+SLOT_SPACE = [1.0] * NSLOT
 TIGHT = set(".,:;'’‘\"“”!")   # glyphs that want smaller side bearings
 WEIGHTS = {"Regular": dict(pen=0.085, wclass=400), "Bold": dict(pen=0.15, wclass=700)}   # Regular = the GoodNotes pen
+MONO_CELL = 620          # Stavan Mono: every glyph gets this advance; wide letters are squeezed to fit
+MONO_MARGIN = 0.05 * S
+
+
+def mono_fit(paths, pen_u):
+    """Squeeze a glyph horizontally (only if needed) and centre it in a fixed-width cell.
+
+    Returns (paths, lsb, rsb) with ink width + lsb + rsb == MONO_CELL.
+    """
+    P = [np.asarray(p, float) for p in paths]
+    a = np.vstack(P)
+    x0, x1 = a[:, 0].min(), a[:, 0].max()
+    ink_c = (x1 - x0) * S
+    avail = MONO_CELL - pen_u - 2 * MONO_MARGIN
+    sx = min(1.0, avail / ink_c) if ink_c > 0 else 1.0
+    P = [np.c_[(p[:, 0] - x0) * sx, p[:, 1]] for p in P]
+    ink_c *= sx
+    lsb = (MONO_CELL - ink_c) / 2
+    rsb = MONO_CELL - (ink_c + pen_u) - lsb
+    return P, lsb, rsb
 
 
 def glyph_name(ch):
@@ -125,8 +147,10 @@ class Glyph:
         return left, right
 
 
-def build(weight, glyphs_json="glyphs.json"):
+def build(weight, glyphs_json="glyphs.json", mono=False):
     cfg = WEIGHTS[weight]
+    family = f"{FAMILY} Mono" if mono else FAMILY
+    ps_family = f"{PS_FAMILY}Mono" if mono else PS_FAMILY
     pen_u = cfg["pen"] * S
     design = json.load(open(os.path.join(DESIGN, glyphs_json)))
     jobs = []
@@ -136,14 +160,24 @@ def build(weight, glyphs_json="glyphs.json"):
         lsb = SB * (0.45 if tight else 1.0)
         rsb = SB * (0.9 if tight else 1.0)
         n = NSLOT if ch.isalnum() else 1
+        variants = [vs[i % len(vs)]["paths"] for i in range(n)]
+        inks = [(np.vstack(p)[:, 0].max() - np.vstack(p)[:, 0].min()) * S + pen_u for p in variants]
+        shared = float(np.mean(inks))
         for i in range(n):
             nm = base if i == 0 else f"{base}.alt{i}"
-            f = SLOT_SB[i] if n > 1 else 1.0
-            jobs.append((nm, ch, vs[i % len(vs)]["paths"], lsb * f, rsb * f))
+            if mono:
+                jobs.append((nm, ch, *mono_fit(variants[i], pen_u)))
+            else:
+                extra = (shared - inks[i]) / 2
+                jobs.append((nm, ch, variants[i], lsb + extra, rsb + extra))
 
     with ThreadPoolExecutor(max_workers=8) as ex:
         built = list(ex.map(lambda j: Glyph(j[0], j[1], j[2], pen_u, j[3], j[4]), jobs))
     G = {g.name: g for g in built}
+    for g in built:  # every version of a character must share its advance
+        b = g.name.split(".alt")[0]
+        assert abs(G[b].advance - g.advance) <= 1, (g.name, g.advance, G[b].advance)
+        g.advance = G[b].advance
 
     spaces = ["space"] + [f"space.alt{i}" for i in range(1, NSLOT)]
     order = [".notdef"] + spaces + ["uni00A0"] + [g.name for g in built]
@@ -158,7 +192,12 @@ def build(weight, glyphs_json="glyphs.json"):
     glyf = {}
     metrics = {}
     # .notdef: a hand-drawn-ish box
-    nd = Glyph(".notdef", None, [np.array([[0, 0], [0.7, 0], [0.7, 1.56], [0, 1.56], [0, 0]])], pen_u, SB, SB)
+    box = [np.array([[0, 0], [0.7, 0], [0.7, 1.56], [0, 1.56], [0, 0]])]
+    if mono:
+        bp, bl, br = mono_fit(box, pen_u)
+        nd = Glyph(".notdef", None, bp, pen_u, bl, br)
+    else:
+        nd = Glyph(".notdef", None, box, pen_u, SB, SB)
     for g in [nd] + built:
         pen = TTGlyphPen(None)
         g.draw_tt(pen)
@@ -172,8 +211,10 @@ def build(weight, glyphs_json="glyphs.json"):
         gl.recalcBounds(fb.font["glyf"])
         metrics[g.name] = (g.advance, getattr(gl, "xMin", 0))
     for i, nm in enumerate(spaces):
-        metrics[nm] = (int(SPACE * SLOT_SPACE[i]), 0)
-    metrics["uni00A0"] = (int(SPACE), 0)
+        metrics[nm] = (MONO_CELL if mono else int(SPACE * SLOT_SPACE[i]), 0)
+    metrics["uni00A0"] = (MONO_CELL if mono else int(SPACE), 0)
+    if mono:
+        assert all(m[0] == MONO_CELL for m in metrics.values()), "mono advances drifted"
     fb.setupHorizontalMetrics(metrics)
 
     ymax = max(getattr(glyf[n], "yMax", 0) for n in glyf)
@@ -186,12 +227,12 @@ def build(weight, glyphs_json="glyphs.json"):
     style = weight
     fb.setupNameTable({
         "copyright": "Copyright 2026 Stavan",
-        "familyName": FAMILY,
+        "familyName": family,
         "styleName": style,
-        "uniqueFontIdentifier": f"{PS_FAMILY}-{style};{VERSION}",
-        "fullName": f"{FAMILY} {style}",
+        "uniqueFontIdentifier": f"{ps_family}-{style};{VERSION}",
+        "fullName": f"{family} {style}",
         "version": f"Version {VERSION}",
-        "psName": f"{PS_FAMILY}-{style}",
+        "psName": f"{ps_family}-{style}",
         "designer": "Stavan (handwriting)",
         "description": "A font made from Stavan's handwritten GoodNotes notes, using the real pen "
                        "strokes. Five variants per letter rotate automatically (calt).",
@@ -205,17 +246,21 @@ def build(weight, glyphs_json="glyphs.json"):
         sxHeight=xh, sCapHeight=cap, usWeightClass=cfg["wclass"],
         fsSelection=(0x20 if weight == "Bold" else 0x40) | 0x80,  # BOLD/REGULAR + USE_TYPO_METRICS
         achVendID="STVN", fsType=0, version=4,
+        panose=_panose(mono), xAvgCharWidth=MONO_CELL if mono else 0,
     )
-    fb.setupPost(isFixedPitch=0, underlinePosition=-180, underlineThickness=int(pen_u * 0.8))
+    fb.setupPost(isFixedPitch=int(mono), underlinePosition=-180, underlineThickness=int(pen_u * 0.8))
     from fontTools.misc.timeTools import timestampNow
     fb.setupHead(unitsPerEm=UPM, fontRevision=float(VERSION), macStyle=1 if weight == "Bold" else 0,
                  created=timestampNow(), modified=timestampNow())
 
-    fea, pairs = features(design, G)
-    export_web(weight, pen_u, jobs, G, pairs, spaces)
+    fea, pairs = features(design, G, kern=not mono)
+    if not mono:
+        export_web(weight, pen_u, jobs, G, pairs, spaces)
+        if weight == "Regular":
+            export_svg_font(jobs, G, design)
     addOpenTypeFeaturesFromString(fb.font, fea)
     os.makedirs(DIST, exist_ok=True)
-    base = os.path.join(DIST, f"{PS_FAMILY}-{style}")
+    base = os.path.join(DIST, f"{ps_family}-{style}")
     fb.save(base + ".ttf")
     from fontTools.ttLib import TTFont
     for flavor in ("woff", "woff2"):
@@ -228,7 +273,15 @@ def build(weight, glyphs_json="glyphs.json"):
     return base + ".ttf"
 
 
-def features(design, G):
+def _panose(mono):
+    from fontTools.ttLib.tables.O_S_2f_2 import Panose
+    p = Panose()
+    p.bFamilyType = 3          # latin hand written
+    p.bProportion = 3 if mono else 0   # for family type 3, 3 = monospaced
+    return p
+
+
+def features(design, G, kern=True):
     slots = [[] for _ in range(NSLOT)]
     for ch in design:
         if not ch.isalnum():
@@ -250,8 +303,11 @@ def features(design, G):
     lines.append("  } cycle;")
     lines.append("} calt;")
     lines.append("")
-    kfea, pairs = kerning(design, G)
-    lines.append(kfea)
+    if kern:
+        kfea, pairs = kerning(design, G)
+        lines.append(kfea)
+    else:
+        pairs = []
     return "\n".join(lines), pairs
 
 
@@ -349,6 +405,29 @@ def export_web(weight, pen_u, jobs, G, pairs, spaces):
     json.dump(strokes, open(os.path.join(WEB, "strokes.json"), "w"), separators=(",", ":"))
 
 
+def export_svg_font(jobs, G, design):
+    """Single-line SVG font (pen centrelines, not outlines) for pen plotters, laser engravers and
+    Inkscape's Hershey Text. Every character uses its first version; SVG fonts have no rotation."""
+    from xml.sax.saxutils import quoteattr
+    out = ['<?xml version="1.0" encoding="UTF-8"?>',
+           '<svg xmlns="http://www.w3.org/2000/svg" version="1.1"><defs>',
+           f'<font id="StavanSingleLine" horiz-adv-x="{int(SPACE)}">',
+           f'<font-face font-family="Stavan Single Line" units-per-em="{UPM}" ascent="950" descent="-550" '
+           f'x-height="{S}" cap-height="{int(json.load(open(os.path.join(DESIGN, "metrics.json")))["cap"] * S)}"/>',
+           f'<missing-glyph horiz-adv-x="{int(SPACE)}"/>',
+           f'<glyph unicode=" " glyph-name="space" horiz-adv-x="{int(SPACE)}"/>']
+    for nm, ch, paths, lsb, rsb in jobs:
+        if "." in nm:
+            continue
+        P = [np.asarray(p, float) * S for p in paths]
+        dx = lsb - np.vstack(P)[:, 0].min()
+        d = "".join("M" + "L".join(f"{x + dx:.0f} {y:.0f}" for x, y in _rdp(p, 1.0)) for p in P)
+        out.append(f'<glyph unicode={quoteattr(ch)} glyph-name="{nm}" horiz-adv-x="{G[nm].advance}" d="{d}"/>')
+    out += ["</font></defs></svg>", ""]
+    open(os.path.join(DIST, "Stavan-SingleLine.svg"), "w").write("\n".join(out))
+
+
 if __name__ == "__main__":
-    for w in sys.argv[1:] or ["Regular", "Bold"]:
-        print(build(w))
+    targets = sys.argv[1:] or ["Regular", "Bold", "Mono"]
+    for w in targets:
+        print(build("Regular", mono=True) if w == "Mono" else build(w))

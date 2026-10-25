@@ -11,3 +11,4 @@ node_modules/
 # local dev: symlink to ../dist so the site works with a static server
 /site/dist
 /_site/
+.wrangler/
