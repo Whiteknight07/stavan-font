@@ -251,3 +251,33 @@ code { font: 0.92em ui-monospace, "SF Mono", Menlo, monospace; background: #dfe3
   .mono-sample { font-size: 16px; padding: 12px 14px; }
   .menu-list { right: auto; left: 0; }
 }
+
+/* ---------- neon sign: the page becomes a brick wall and the ink becomes glowing tubes ---------- */
+.seg svg .neon-ico { stroke-width: 1.6; stroke-linecap: round; }
+body[data-paper="neon"] #page {
+  background-color: #1b181c;
+  background-image:
+    radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.55) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60'%3E%3Crect width='120' height='60' fill='%231b181c'/%3E%3Cg fill='%23221e23' stroke='%23121014' stroke-width='3'%3E%3Crect x='0' y='0' width='60' height='30'/%3E%3Crect x='60' y='0' width='60' height='30'/%3E%3Crect x='-30' y='30' width='60' height='30'/%3E%3Crect x='30' y='30' width='60' height='30'/%3E%3Crect x='90' y='30' width='60' height='30'/%3E%3C/g%3E%3C/svg%3E");
+  box-shadow: 0 10px 40px -12px rgba(0, 0, 0, 0.6);
+}
+body[data-paper="neon"] #page .title,
+body[data-paper="neon"] #page .ink-layer,
+body[data-paper="neon"] #page .replay-layer {
+  color: color-mix(in srgb, var(--neon) 45%, white);
+  filter: drop-shadow(0 0 1.5px var(--neon)) drop-shadow(0 0 7px var(--neon)) drop-shadow(0 0 22px var(--neon));
+}
+body[data-paper="neon"] #page .subtitle { color: #8f8a96; }
+body[data-paper="neon"] .sheet-body textarea {
+  color: color-mix(in srgb, var(--neon) 45%, white); caret-color: #fff;
+  text-shadow: 0 0 2px var(--neon), 0 0 8px var(--neon), 0 0 22px var(--neon);
+}
+body[data-paper="neon"] .sheet-body.live textarea { color: transparent; text-shadow: none; }
+body[data-paper="neon"] .sheet-body textarea::selection { background: rgba(255, 255, 255, 0.18); }
+body[data-paper="neon"] #page .actions button:not(.primary), body[data-paper="neon"] #page .menu summary {
+  background: rgba(255, 255, 255, 0.08); color: #eee; border-color: rgba(255, 255, 255, 0.18);
+}
+body[data-paper="neon"] #page .primary { background: var(--neon); border-color: var(--neon); color: #111; }
+body[data-paper="neon"] #page .replay-layer { animation: neon-on 0.9s steps(1) 1; }
+@keyframes neon-on { 0% { opacity: 0.2; } 12% { opacity: 1; } 18% { opacity: 0.35; } 26% { opacity: 1; } 31% { opacity: 0.6; } 40% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { body[data-paper="neon"] #page .replay-layer { animation: none; } }

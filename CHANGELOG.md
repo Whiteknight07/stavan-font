@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.0 (2026-10-25)
+
+- Make your own (font.stavan.ai/make): draw an alphabet and download a real OpenType font with rotating versions,
+  built in the browser
+- How it was made (font.stavan.ai/how): a scrolling story that takes one page of notes apart into the font
+- Save as notebook pages: a multi-page PDF with vector pen-stroke ink, for GoodNotes and other notes apps
+- Save as a 3D print: an STL of tubes on a plaque
+- Neon sign paper, including in image and video exports
+- Fix: animated SVGs embedded in a page no longer restyle other elements with the same class
+- Privacy: words with long digit runs or emails are never exported from the notes
+
 ## 1.1.0 (2026-10-25)
 
 - New home: https://font.stavan.ai (Cloudflare). Old github.io links redirect there.

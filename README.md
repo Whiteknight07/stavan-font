@@ -11,8 +11,9 @@
   <a href="https://font.stavan.ai"><b>Try it at font.stavan.ai</b></a> &nbsp;|&nbsp;
   <a href="https://github.com/Whiteknight07/stavan-font/releases/latest"><b>Download</b></a> &nbsp;|&nbsp;
   <a href="#handwriting-in-any-readme-with-a-url">Handwriting by URL</a> &nbsp;|&nbsp;
-  <a href="#stavan-mono-code-in-my-handwriting">Stavan Mono</a> &nbsp;|&nbsp;
-  <a href="#write-it-with-a-real-pen">Pen plotters</a>
+  <a href="https://font.stavan.ai/make"><b>Make your own</b></a> &nbsp;|&nbsp;
+  <a href="https://font.stavan.ai/how">How it was made</a> &nbsp;|&nbsp;
+  <a href="#stavan-mono-code-in-my-handwriting">Stavan Mono</a>
 </p>
 
 <p align="center">
@@ -44,11 +45,25 @@ Top: a line from my notes. Bottom: the same line typed in the font.
 - **Live ink.** The pen draws each letter as you type it.
 - **Watch it write.** Replays the whole page with the real pen strokes, in the order I wrote them.
 - **Send as a note.** Copies a link. Whoever opens it watches your note being written.
-- **Save** an image, a video of it writing (MP4) or an animated SVG.
+- **Save** an image, a video of it writing (MP4), an animated SVG, **notebook pages** (a PDF of ruled pages with the
+  ink stored as pen strokes, ready to import into GoodNotes) or a **3D print** (an STL where every stroke is a tube).
+- **Neon sign.** Switch the paper to neon and the page becomes a brick wall with your words in glowing tubes.
 - **Where each letter came from.** Pick a character to see its five versions inside the real words they were cut from.
 - **Real or font?** A game. One word was written in my notes, the other was typed in the font. Pick the real one.
 - My six real GoodNotes ink colours, ruled, grid, dotted or blank paper, and a bookmarklet that turns any website into
   my handwriting.
+
+## Make a font of your own handwriting
+
+[font.stavan.ai/make](https://font.stavan.ai/make) lets anyone draw their alphabet with an Apple Pencil, a finger or a
+mouse and download it as a real font (OpenType), with the same rotating versions as Stavan if you draw letters more
+than once. You can type with it the moment you've drawn a few letters. Everything runs in the browser: the strokes
+are merged into outlines with a polygon union and written to a font file with opentype.js. Nothing is uploaded.
+
+## How it was made, as a story
+
+[font.stavan.ai/how](https://font.stavan.ai/how) takes one real page of my notes apart as you scroll: the page writes
+itself, then splits into its 496 strokes, its words, its letters, and finally the five letters that made it into the font.
 
 ## Install it on your computer
 
@@ -146,7 +161,7 @@ The pipeline lives in [`hand/`](hand). It takes GoodNotes PDF exports and ends w
 | 6 | `select_variants.py`, `qa.py` | Ranks samples by how typical they are, reviews 16 candidates per character, keeps 5 varied approved ones |
 | 7 | `design.py`, `construct.py` | Light-touch sizing that keeps each letter's own size and bounce; builds accents and missing symbols from my own strokes |
 | 8 | `build_font.py` | Round GoodNotes-style pen, then potrace, then TrueType; the 5-slot rotation, kerning, Mono, single-line SVG and web data |
-| 9 | `export_words.py` | Exports the source words for "where each letter came from" and "real or font?" |
+| 9 | `export_words.py`, `export_page.py` | Export the source words for "where each letter came from" and "real or font?", and the page for the story |
 
 All five versions of a character share one advance width, each centred in it. Browsers restart the rotation differently
 when a line wraps, so equal widths keep line breaks and the cursor in the same place whichever version an app shows.

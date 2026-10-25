@@ -1,0 +1,80 @@
+/* Make your own: drawing page. Same notebook-on-a-desk system as the main page. */
+.topbar {
+  width: min(var(--sheet-w), calc(100% - 24px)); margin: 14px auto 0; display: flex; align-items: center; gap: 10px;
+  font-size: 14px; color: var(--muted);
+}
+.topbar a { color: var(--text); font-weight: 600; text-decoration: none; }
+.topbar a:hover { text-decoration: underline; }
+.topbar-sep { width: 1px; height: 14px; background: #c9cfd8; }
+
+.make .title { height: 80px; margin: 0 0 6px; color: var(--ink); }
+.make .title svg { height: 100%; width: auto; display: block; overflow: visible; }
+
+.set-row { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; margin: 4px 0 16px; font-size: 14px; }
+.set-row [role="radio"] {
+  border: 1px solid #cfd5de; background: #fff; border-radius: 9px; padding: 6px 12px; cursor: pointer; color: var(--muted);
+}
+.set-row [aria-checked="true"] { border-color: var(--ink); color: var(--text); box-shadow: inset 0 0 0 1px var(--ink); }
+.extra { display: inline-flex; gap: 6px; align-items: center; color: #3a3f48; background: rgba(255,255,255,.9); padding: 2px 4px; }
+
+.strip {
+  display: flex; gap: 3px; overflow-x: auto; padding: 4px 2px 10px; margin-bottom: 8px; scrollbar-width: thin;
+  font-family: "Stavan", cursive; font-feature-settings: "calt" 0;
+}
+.strip button {
+  flex: 0 0 auto; min-width: 34px; height: 38px; border: 1px solid #dfe5ee; border-radius: 8px; background: #fff;
+  font: inherit; font-size: 22px; line-height: 1; color: #9aa3b1; cursor: pointer; padding: 0 6px 4px; position: relative;
+}
+.strip button.done { color: var(--text); border-color: #c9d2de; }
+.strip button.done::after {
+  content: ""; position: absolute; right: 3px; top: 3px; width: 5px; height: 5px; border-radius: 50%; background: var(--ink);
+}
+.strip button[aria-selected="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.strip button[aria-selected="true"]::after { background: #fff; }
+.strip sup { font: 10px var(--ui); margin-left: 1px; }
+
+.draw { display: grid; grid-template-columns: 120px 1fr; gap: 14px; align-items: stretch; }
+.target {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  background: rgba(255,255,255,.92); border: 1px solid #dfe5ee; border-radius: 12px; padding: 10px;
+}
+.target-label { font-size: 13px; color: var(--muted); }
+.target-char { font: 400 76px/1.1 Georgia, "Times New Roman", serif; color: var(--text); min-height: 84px; }
+.target-meta { font-size: 12px; color: var(--muted); text-align: center; }
+.pad-wrap { min-width: 0; }
+#pad {
+  display: block; width: 100%; height: 340px; background: #fff; border: 1px solid #cfd5de; border-radius: 12px;
+  touch-action: none; cursor: crosshair; -webkit-user-select: none; user-select: none;
+}
+.pad-hint { margin: 6px 2px 0; font-size: 13px; color: var(--muted); }
+
+.draw-controls { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.draw-controls .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.draw-controls button, .try-actions button, .btn {
+  border: 1px solid #cfd5de; background: #fff; color: var(--text); border-radius: 9px; padding: 7px 14px; cursor: pointer;
+  min-height: 38px; font-size: 15px;
+}
+.draw-controls button:hover, .try-actions button:hover { border-color: #9aa3b1; }
+.draw-controls .primary, .try-actions .primary { background: var(--ink); border-color: var(--ink); color: #fff; min-width: 96px; }
+.auto { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; color: #3a3f48; margin-left: 6px; }
+.progress { margin: 10px 0 0; font-size: 14px; color: var(--muted); min-height: 20px; }
+
+.try-head { padding-bottom: 6px; }
+.name-row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; font-size: 14px; }
+.name-row label { color: var(--muted); }
+.name-row input {
+  font: inherit; font-size: 15px; padding: 6px 10px; border: 1px solid #cfd5de; border-radius: 8px; min-width: 220px; background: #fff;
+}
+.name-row .seg button { font-size: 14px; }
+.try-body textarea { min-height: calc(var(--L) * 4 + var(--pt)); color: var(--ink); }
+.try-actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; padding-bottom: 30px; }
+.btn-lg { font-size: 16px; padding: 9px 18px; }
+.file-btn { display: inline-flex; align-items: center; }
+
+@media (max-width: 720px) {
+  .draw { grid-template-columns: 1fr; }
+  .target { flex-direction: row; justify-content: flex-start; gap: 12px; padding: 6px 12px; }
+  .target-char { font-size: 44px; min-height: 0; }
+  #pad { height: 280px; }
+  .make .title { height: 56px; }
+}

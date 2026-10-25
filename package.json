@@ -1,6 +1,6 @@
 {
   "name": "stavan-font",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A handwriting font made from 675 pages of real Apple Pencil notes, plus a tiny library that replays the pen strokes as animated SVG.",
   "type": "module",
   "license": "OFL-1.1 AND MIT",
@@ -43,12 +43,19 @@
     "site/data/stavan-*.json",
     "site/data/strokes.json",
     "OFL.txt",
-    "LICENSE"
+    "LICENSE",
+    "site/notebook.js",
+    "site/print3d.js",
+    "site/make/fontmaker.js"
   ],
   "scripts": {
-    "test": "node test/layout.test.mjs",
+    "test": "node test/layout.test.mjs && node test/exports.test.mjs",
     "build:site": "sh scripts/build-site.sh",
     "dev": "sh scripts/build-site.sh && npx wrangler dev",
     "deploy": "sh scripts/build-site.sh && npx wrangler deploy"
+  },
+  "devDependencies": {
+    "opentype.js": "1.3.4",
+    "polygon-clipping": "0.15.7"
   }
 }

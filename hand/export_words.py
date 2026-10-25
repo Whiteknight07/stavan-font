@@ -9,6 +9,7 @@ import json
 import os
 import pickle
 import random
+import re
 import sys
 
 import numpy as np
@@ -43,6 +44,10 @@ def main():
         m, b = np.polyfit(X, Y, 1)
         return m, b, s["xh"]
 
+    def private(text):
+        """Long digit runs (ID numbers), emails and @handles never leave the private data."""
+        return bool(re.search(r"\d{5,}|@|\b(shah)\b", text, re.I))
+
     def add_word(wid, s, text):
         if wid in index:
             return index[wid]
@@ -71,6 +76,8 @@ def main():
                 continue
             w = words[wid]
             text = s["text"] if s["text"] != "(verified)" else ""
+            if private(text):
+                continue
             wi = add_word(wid, s, text)
             ks = list(w["groups"][gi])
             # i/j dots that were re-attached from a neighbouring group

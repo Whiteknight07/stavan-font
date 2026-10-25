@@ -45,6 +45,7 @@
     <button role="radio" data-paper="grid" title="Grid paper"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12M4 2v12M8 2v12M12 2v12"/></svg><span class="vh">Grid</span></button>
     <button role="radio" data-paper="dots" title="Dotted paper"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="dot" d="M4 4h0M8 4h0M12 4h0M4 8h0M8 8h0M12 8h0M4 12h0M8 12h0M12 12h0"/></svg><span class="vh">Dotted</span></button>
     <button role="radio" data-paper="blank" title="Blank paper"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="1"/></svg><span class="vh">Blank</span></button>
+    <button role="radio" data-paper="neon" title="Neon sign"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="neon-ico" d="M2.5 11c1.5-6 3-6 4 0s2.5 6 4 0 2-4 3-4"/></svg><span class="vh">Neon sign</span></button>
   </div>
   <button id="live" class="toggle" aria-pressed="true" title="The pen draws each letter as you type">Live ink</button>
 </header>
@@ -62,6 +63,8 @@
             <button id="save-png" role="menuitem">Image (PNG)</button>
             <button id="save-video" role="menuitem">Video of it writing</button>
             <button id="save-svg" role="menuitem">Animated SVG</button>
+            <button id="save-pdf" role="menuitem">Notebook pages (PDF)</button>
+            <button id="save-stl" role="menuitem">3D print (STL)</button>
           </div>
         </details>
       </div>
@@ -78,6 +81,7 @@
   <section class="desk-copy" aria-labelledby="how">
     <h2 id="how">What you're looking at</h2>
     <p>Every letter on this page was cut out of real Apple Pencil strokes from my GoodNotes notes: lectures, proofs, assignments, practice exams. Nothing was traced from photos and nothing was redrawn. Each letter and digit has five versions taken from different pages. They take turns as you type, so the same word never comes out the same twice. “Watch it write” replays the actual pen strokes in the order I wrote them.</p>
+    <p class="row more-links"><a class="btn" href="how">See one page become the font</a> <a class="btn" href="make">Make a font of your handwriting</a></p>
   </section>
 
   <article class="sheet" data-paper-fixed="grid" aria-labelledby="origins-h">
@@ -145,6 +149,12 @@ print(fib(<span class="n">10</span>))   <span class="c"># 55</span></pre>
     <p>Write something on the page above and choose Save › Animated SVG. You get an SVG that writes itself stroke by stroke. It plays in browsers and in GitHub READMEs. To make them from code:</p>
     <div class="snippet"><pre id="js-snippet"></pre><button class="copy" data-copy="js-snippet">Copy</button></div>
 
+    <h3>As handwritten notes</h3>
+    <p>Type or paste your notes on the page and choose Save › Notebook pages. You get a PDF of ruled pages written in my hand, with the ink stored as pen strokes like GoodNotes does, so you can import it into GoodNotes or Notability and keep writing on it.</p>
+
+    <h3>As a 3D print</h3>
+    <p>Save › 3D print turns your page into an STL: every pen stroke becomes a tube on a thin plaque, like a small neon sign. Any slicer can print it. Switch the paper to neon to see it lit up.</p>
+
     <h3>With a real pen</h3>
     <p>The letters are pen paths, not outlines, so a pen plotter or laser can write them with a single line, the way I did. Download the <a href="dist/Stavan-SingleLine.svg" download>single-line font</a> and pick it in Inkscape under Extensions › Text › Hershey Text (choose “Other SVG font”). Animated SVGs saved from this page are single-line too and plot as they are.</p>
 
@@ -155,7 +165,7 @@ print(fib(<span class="n">10</span>))   <span class="c"># 55</span></pre>
 </main>
 
 <footer class="foot">
-  <p>Made by Stavan. Font under the <a href="https://openfontlicense.org">SIL Open Font License 1.1</a>, code under MIT. <a href="https://github.com/Whiteknight07/stavan-font">Source on GitHub</a>. <a href="https://stavan.ai">stavan.ai</a></p>
+  <p>Made by Stavan. Font under the <a href="https://openfontlicense.org">SIL Open Font License 1.1</a>, code under MIT. <a href="make">Make your own</a>. <a href="how">How it was made</a>. <a href="https://github.com/Whiteknight07/stavan-font">Source on GitHub</a>. <a href="https://stavan.ai">stavan.ai</a></p>
 </footer>
 </body>
 </html>

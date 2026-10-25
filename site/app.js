@@ -1,10 +1,14 @@
 import { load, Hand } from "./stavan.js";
+import { notebookPDF } from "./notebook.js";
+import { stlFromText } from "./print3d.js";
 
 const SITE = "https://font.stavan.ai";
 const DEFAULT_TEXT = `Hi, this is my handwriting, typed.
 Every letter here was cut out of real Apple Pencil strokes from my lecture notes. Each one has five versions that take turns as you type, so no two words come out the same.
 This page is yours now. Type over it.`;
 const INKS = ["#000000", "#d10000", "#007aff", "#f49923", "#636363", "#82218c"];
+// on the neon wall each ink becomes a gas: pink, red, cyan, amber, white, violet
+const NEON = { "#000000": "#ff4fd8", "#d10000": "#ff3b30", "#007aff": "#35d6ff", "#f49923": "#ffb23b", "#636363": "#f4f1ff", "#82218c": "#b46bff" };
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -24,7 +28,7 @@ const state = {
   ink: INKS.includes("#" + q.get("ink")) ? "#" + q.get("ink") : INKS[0],
   size: Math.min(72, Math.max(20, +q.get("size") || (innerWidth < 640 ? 26 : 36))),
   weight: q.get("pen") === "thick" ? "Bold" : "Regular",
-  paper: ["ruled", "grid", "dots", "blank"].includes(q.get("paper")) ? q.get("paper") : "ruled",
+  paper: ["ruled", "grid", "dots", "blank", "neon"].includes(q.get("paper")) ? q.get("paper") : "ruled",
   live: q.get("live") !== "0",
 };
 const playOnOpen = q.get("play") === "1";
@@ -61,6 +65,7 @@ function setRadio(groupSel, attr, value) {
 }
 function apply() {
   root.style.setProperty("--ink", state.ink);
+  root.style.setProperty("--neon", NEON[state.ink]);
   root.style.setProperty("--F", state.size + "px");
   pad.style.fontWeight = state.weight === "Bold" ? 700 : 400;
   document.body.dataset.paper = state.paper;
@@ -199,11 +204,38 @@ $("#save-png").addEventListener("click", async () => {
   ctx.scale(k, k);
   ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
   drawPaper(ctx, W, H, box, F, L);
-  hand.draw(ctx, pad.value, { x: box.left, y: box.top, size: F, maxWidth: box.width, color: state.ink });
+  inkStyle(ctx);
+  const passes = state.paper === "neon" ? 2 : 1;
+  for (let i = 0; i < passes; i++) hand.draw(ctx, pad.value, { x: box.left, y: box.top, size: F, maxWidth: box.width, color: ctx.strokeStyle });
   c.toBlob((b) => { download(b, fileName() + ".png"); say("Image saved."); }, "image/png");
 });
 
+// ink style for canvas exports; on the neon wall strokes get a white-hot core and a coloured glow
+function inkStyle(ctx, scale) {
+  if (state.paper !== "neon") { ctx.strokeStyle = state.ink; ctx.shadowBlur = 0; return; }
+  ctx.strokeStyle = mix(NEON[state.ink], "#ffffff", 0.55);
+  ctx.shadowColor = NEON[state.ink];
+  ctx.shadowBlur = 16;
+}
+function mix(a, b, t) {
+  const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const [x, y] = [p(a), p(b)];
+  return "#" + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, "0")).join("");
+}
+function drawNeonWall(ctx, W, H) {
+  ctx.fillStyle = "#1b181c"; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = "#121014"; ctx.lineWidth = 3;
+  for (let y = 0, row = 0; y < H; y += 30, row++) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    for (let x = row % 2 ? -30 : 0; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 30); ctx.stroke(); }
+  }
+  const g = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.7);
+  g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,.55)");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+
 function drawPaper(ctx, W, H, box, F, L) {
+  if (state.paper === "neon") return drawNeonWall(ctx, W, H);
   const css = getComputedStyle(root);
   const base = box.top + 1.05 * F + 1;
   ctx.save();
@@ -256,8 +288,10 @@ $("#save-video").addEventListener("click", async () => {
     ctx.save();
     ctx.translate(box.left, box.top);
     ctx.scale(F / 1000, F / 1000);
-    ctx.strokeStyle = state.ink; ctx.lineWidth = hand.m.pen; ctx.lineCap = ctx.lineJoin = "round";
+    inkStyle(ctx);
+    ctx.lineWidth = hand.m.pen; ctx.lineCap = ctx.lineJoin = "round";
     hand.drawAt(ctx, strokes, timing, t);
+    if (state.paper === "neon") hand.drawAt(ctx, strokes, timing, t);
     ctx.restore();
   };
   frame(0);
@@ -281,6 +315,26 @@ $("#save-video").addEventListener("click", async () => {
   download(new Blob(chunks, { type: mime.split(";")[0] }), fileName() + (mime.includes("mp4") ? ".mp4" : ".webm"));
   say("Video saved.");
   recording = false;
+});
+
+// ---------- notebook PDF and 3D print ----------
+$("#save-pdf").addEventListener("click", async () => {
+  closeMenu();
+  const hand = await getHand(state.weight);
+  const paper = state.paper === "neon" ? "ruled" : state.paper;
+  const title = pad.value.trim().split("\n")[0].slice(0, 60) || "Notes";
+  const blob = await notebookPDF(hand, pad.value, { ink: state.ink, paper, title });
+  download(blob, fileName() + ".pdf");
+  say("Notebook saved. Import the PDF into GoodNotes or any notes app.");
+});
+$("#save-stl").addEventListener("click", async () => {
+  closeMenu();
+  const hand = await getHand(state.weight);
+  const text = pad.value.trim() ? pad.value : "Stavan";
+  const lines = hand.layout(text, 180 / (12 / (1.75 * hand.m.xh)) ).lines.length;
+  if (lines > 12) say("That's a lot of text for a print. The STL is ready, but a short word or name prints best.");
+  download(stlFromText(hand, text), fileName() + ".stl");
+  if (lines <= 12) say("STL saved. Open it in any slicer; letters are about 12 mm tall.");
 });
 
 // ---------- save menu ----------

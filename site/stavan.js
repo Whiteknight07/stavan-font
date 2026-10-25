@@ -138,11 +138,13 @@ export class Hand {
     const r = (v) => Math.round(v * 10) / 10;
     const d = (s) => "M" + s.pts.map((p) => `${r(p[0] + padU)} ${r(p[1] + padU - y0)}`).join("L");
     const timing = o.animate ? this.timing(strokes, o.speed) : null;
+    const uid = "stv" + Math.random().toString(36).slice(2, 9);
     let style = "", paths = "";
     if (timing) {
-      style = `<style>.s{stroke-dasharray:1 2;stroke-dashoffset:1;opacity:0;animation:w var(--d) linear var(--t) forwards}` +
-        `@keyframes w{0%{opacity:1;stroke-dashoffset:1}100%{opacity:1;stroke-dashoffset:0}}` +
-        `@media (prefers-reduced-motion:reduce){.s{animation:none;opacity:1;stroke-dashoffset:0}}</style>`;
+      // scoped to this SVG: inline <style> applies to the whole page when the SVG is embedded in HTML
+      style = `<style>.${uid} .s{stroke-dasharray:1 2;stroke-dashoffset:1;opacity:0;animation:${uid} var(--d) linear var(--t) forwards}` +
+        `@keyframes ${uid}{0%{opacity:1;stroke-dashoffset:1}100%{opacity:1;stroke-dashoffset:0}}` +
+        `@media (prefers-reduced-motion:reduce){.${uid} .s{animation:none;opacity:1;stroke-dashoffset:0}}</style>`;
       paths = strokes.map((s, i) =>
         `<path class="s" pathLength="1" style="--t:${timing.start[i].toFixed(3)}s;--d:${timing.dur[i].toFixed(3)}s" d="${d(s)}"/>`).join("");
     } else {
@@ -150,7 +152,7 @@ export class Hand {
     }
     const bg = o.background ? `<rect width="100%" height="100%" fill="${o.background}"/>` : "";
     const label = String(text).replace(/[<&"]/g, (c) => ({ "<": "&lt;", "&": "&amp;", '"': "&quot;" }[c]));
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${r(W)} ${r(H)}" width="${r(W * scale)}" height="${r(H * scale)}" role="img" aria-label="${label}">` +
+    return `<svg xmlns="http://www.w3.org/2000/svg" class="${uid}" viewBox="0 0 ${r(W)} ${r(H)}" width="${r(W * scale)}" height="${r(H * scale)}" role="img" aria-label="${label}">` +
       `${style}${bg}<g class="all" fill="none" stroke="${color}" stroke-width="${r(pen)}" stroke-linecap="round" stroke-linejoin="round">${paths}</g></svg>`;
   }
 

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Make your own handwriting font</title>
+<meta name="description" content="Draw your alphabet with a pen, finger or mouse and download it as a real font with rotating letter versions. Runs on your device; nothing is uploaded.">
+<meta property="og:title" content="Make your own handwriting font">
+<meta property="og:description" content="Draw your alphabet and download a real font with rotating letter versions, built right in your browser.">
+<meta property="og:image" content="https://font.stavan.ai/social-make.png">
+<meta property="og:url" content="https://font.stavan.ai/make">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#e9ecf1">
+<link rel="canonical" href="https://font.stavan.ai/make">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="dist/stavan.css">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="make/make.css">
+<script type="module" src="make/make.js"></script>
+</head>
+<body class="make" data-paper="ruled">
+
+<nav class="topbar"><a href="./">Stavan</a><span class="topbar-sep"></span><span>Make your own</span></nav>
+
+<main>
+  <article class="sheet" aria-labelledby="make-title">
+    <div class="sheet-pad">
+      <h1 class="title" id="make-title" aria-label="make your own"></h1>
+      <p class="page-note">Draw each character once with a pen, finger or mouse, and you get a real font of your handwriting. Draw a few letters twice or three times and those versions take turns as you type, like mine do. Everything happens on this device. Nothing is uploaded.</p>
+
+      <div class="set-row" role="radiogroup" aria-label="Characters to draw">
+        <button role="radio" data-set="quick">Quick: a to z and . , ! ? ’</button>
+        <button role="radio" data-set="full">Full: add capitals, digits and more punctuation</button>
+        <label class="extra"><input type="checkbox" id="extra"> Two more versions of every small letter and digit</label>
+      </div>
+
+      <div class="strip" id="strip" role="listbox" aria-label="Characters"></div>
+
+      <div class="draw">
+        <div class="target" aria-live="polite">
+          <span class="target-label">Draw</span>
+          <span class="target-char" id="target-char"></span>
+          <span class="target-meta" id="target-meta"></span>
+        </div>
+        <div class="pad-wrap">
+          <canvas id="pad" aria-label="Drawing area. Draw the character shown, then press Enter for the next one."></canvas>
+          <p class="pad-hint" id="pad-hint">Small letters sit between the dashed line and the baseline. Tall letters and capitals reach the top line.</p>
+        </div>
+      </div>
+
+      <div class="draw-controls">
+        <div class="row">
+          <button id="undo" title="Undo the last stroke (Backspace)">Undo stroke</button>
+          <button id="clear">Clear</button>
+          <label class="auto"><input type="checkbox" id="auto"> Next after a pause</label>
+        </div>
+        <div class="row">
+          <button id="back">Back</button>
+          <button id="next" class="primary">Next</button>
+        </div>
+      </div>
+      <p class="progress" id="progress" role="status"></p>
+    </div>
+  </article>
+
+  <article class="sheet" aria-labelledby="try-title">
+    <div class="sheet-pad try-head">
+      <h2 class="hand page-title" id="try-title">try it</h2>
+      <p class="page-note" id="try-note">Draw a few letters and they show up here. Type to see your handwriting.</p>
+      <div class="name-row">
+        <label for="font-name">Font name</label>
+        <input id="font-name" type="text" maxlength="40" value="My Handwriting" autocomplete="off">
+        <div class="seg" role="radiogroup" aria-label="Pen">
+          <button role="radio" data-pen="0.085">Fine</button>
+          <button role="radio" data-pen="0.15">Thick</button>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-body lined try-body">
+      <textarea id="try" spellcheck="false" aria-label="Type to try your handwriting"></textarea>
+      <div id="try-ink" class="replay-layer" aria-hidden="true" hidden></div>
+    </div>
+    <div class="sheet-pad try-actions">
+      <button id="download" class="primary btn-lg">Download my font</button>
+      <button id="replay">Watch it write</button>
+      <button id="save-svg">Save animated SVG</button>
+      <button id="save-pdf">Save as notebook pages (PDF)</button>
+    </div>
+  </article>
+  <p class="status" id="status" role="status" aria-live="polite"></p>
+
+  <section class="desk-copy" aria-labelledby="tips-h">
+    <h2 id="tips-h">Tips</h2>
+    <p>Write the way you normally do, not the way you were taught. Draw each letter in one go and keep the strokes you would really make. Your drawings are saved in this browser, so you can stop and come back.</p>
+    <p>The font installs like any other (double-click the file). Letters you skip fall back to the app's default font.</p>
+    <p class="row">
+      <button id="export" class="btn">Back up drawings</button>
+      <label class="btn file-btn">Restore a backup<input id="import" type="file" accept="application/json" hidden></label>
+      <button id="reset" class="btn">Start over</button>
+    </p>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>Part of <a href="./">Stavan</a>, a font made from 675 pages of real notes. <a href="https://github.com/Whiteknight07/stavan-font">Source on GitHub</a>.</p>
+</footer>
+</body>
+</html>

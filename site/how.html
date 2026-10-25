@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How a page of notes became a font</title>
+<meta name="description" content="One real page of Apple Pencil notes, taken apart stroke by stroke until it becomes the Stavan font.">
+<meta property="og:title" content="How a page of notes became a font">
+<meta property="og:description" content="One real page of Apple Pencil notes, taken apart stroke by stroke until it becomes a font.">
+<meta property="og:image" content="https://font.stavan.ai/social.png">
+<meta property="og:url" content="https://font.stavan.ai/how">
+<meta name="theme-color" content="#e9ecf1">
+<link rel="canonical" href="https://font.stavan.ai/how">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="dist/stavan.css">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="how/how.css">
+<script type="module" src="how/how.js"></script>
+</head>
+<body class="how">
+<nav class="topbar"><a href="./">Stavan</a><span class="topbar-sep"></span><span>How it was made</span></nav>
+
+<header class="how-intro">
+  <h1 class="title" id="how-title" aria-label="from notes to a font"></h1>
+  <p>This is a real page from my graph theory notes. Scroll to watch it get taken apart, stroke by stroke, until five of its letters end up in the font.</p>
+</header>
+
+<section class="story">
+  <figure class="story-fig" id="fig" data-step="0" aria-label="A page of handwritten notes on graph theory">
+    <div class="story-page"><svg id="page-svg" role="img" aria-label="Page of notes"></svg></div>
+    <div class="glyph-row" id="glyph-row" aria-label="The five versions of each letter taken from this page"></div>
+  </figure>
+  <div class="steps">
+    <div class="step" data-step="1"><p class="n">The page</p><p>I wrote this in a lecture with an Apple Pencil in GoodNotes. It's one of 675 pages that went into the font.</p></div>
+    <div class="step" data-step="2"><p class="n">Every stroke</p><p>GoodNotes doesn't keep a picture of the page. It keeps every stroke as the exact path the pen took, in order. This page has <b id="n-strokes">496</b> of them, each coloured differently here.</p></div>
+    <div class="step" data-step="3"><p class="n">Words</p><p>Strokes that sit close together on a line are grouped into words. There are <b id="n-words">112</b> on this page.</p></div>
+    <div class="step" data-step="4"><p class="n">Letters</p><p>Inside each word, strokes that overlap are grouped into letters. An AI model read thousands of words like these, and each letter it read was matched back to its strokes.</p></div>
+    <div class="step" data-step="5"><p class="n">The keepers</p><p>Most letters are fine but ordinary. From this page, <b id="n-picked">five</b> were picked to be in the font because they look the most like how I usually write them, while still looking different from the others.</p></div>
+    <div class="step" data-step="6"><p class="n">The font</p><p>Every letter gets five versions from five different pages. The one from this page sits next to four others, and they take turns as you type.</p></div>
+  </div>
+</section>
+
+<section class="desk-copy how-end">
+  <h2>Now write with it</h2>
+  <p>705 letters from 675 pages, packed into a font you can type with, download, or watch write itself.</p>
+  <p class="row"><a class="btn primary" href="./">Write with it</a> <a class="btn" href="make">Make your own</a></p>
+</section>
+
+<footer class="foot"><p>Part of <a href="./">Stavan</a>. <a href="https://github.com/Whiteknight07/stavan-font">Source on GitHub</a>.</p></footer>
+</body>
+</html>
