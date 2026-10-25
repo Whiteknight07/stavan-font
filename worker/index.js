@@ -4,7 +4,8 @@
 //
 // Parameters: text, size (px, 8-300), color (hex without #, or a CSS colour name), weight (regular|bold),
 // width (px, wraps at spaces), bg (background colour), speed (x-heights per second), static (1 = no animation),
-// tight (0 = keep full line height instead of cropping to the ink).
+// tight (0 = keep full line height instead of cropping to the ink), start (0-4: which of the five versions the
+// first letter of each run uses; the rest follow on from it, so "Hi" with start=4 gets a different H and i).
 import { Hand } from "../site/stavan.js";
 import strokes from "../site/data/strokes.json";
 import regular from "../site/data/stavan-Regular.json";
@@ -21,10 +22,24 @@ const colour = (v, d) => {
   return d;
 };
 
+// The font's rotation, begun at version `start` instead of the first: shape as if `start` spaces came first
+// (spaces take part in the rotation), then drop them.
+function startingAt(hand, start) {
+  if (!start) return hand;
+  const h = Object.create(hand);
+  h.shape = (text) => {
+    const { glyphs, width } = hand.shape(" ".repeat(start) + text);
+    const dx = glyphs.length > start ? glyphs[start].x : width;
+    return { glyphs: glyphs.slice(start).map((g) => ({ ...g, x: g.x - dx })), width: width - dx };
+  };
+  return h;
+}
+
 function write(url) {
   const q = url.searchParams;
   const text = (q.get("text") ?? "hello").slice(0, 1000) || " ";
-  const hand = hands[q.get("weight")?.toLowerCase() === "bold" ? "bold" : "regular"];
+  const base = hands[q.get("weight")?.toLowerCase() === "bold" ? "bold" : "regular"];
+  const hand = startingAt(base, Math.round(clamp(num(q.get("start")), 0, base.m.slots - 1, 0)));
   const svg = hand.svg(text, {
     size: clamp(num(q.get("size")), 8, 300, 64),
     color: colour(q.get("color"), "#000000"),

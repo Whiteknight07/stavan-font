@@ -107,6 +107,7 @@ Put any text in the link and you get it written by hand, as an animated image:
 | `bg` | none | Background colour |
 | `speed` | `13` | Pen speed, in x-heights per second |
 | `static` | `0` | `1` for a still image |
+| `start` | `0` | Which of the five versions to start on (`0` to `4`). Try it if you'd like a different-looking letter |
 
 ## Animated handwriting from code
 

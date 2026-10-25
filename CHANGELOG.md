@@ -10,6 +10,7 @@
 - Neon sign paper, including in image and video exports
 - Fix: animated SVGs embedded in a page no longer restyle other elements with the same class
 - Privacy: words with long digit runs or emails are never exported from the notes
+- `/write.svg?start=0-4`: start the rotation on a different version of the first letter
 
 ## 1.1.0 (2026-10-25)
 
